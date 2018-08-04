@@ -63,6 +63,7 @@ public abstract class AbstractRegion implements Region {
 
     protected final Map<ActiveMQDestination, Destination> destinations = new ConcurrentHashMap<ActiveMQDestination, Destination>();
     protected final DestinationMap destinationMap = new DestinationMap();
+    //拉消息的时候是直接在map里面拿,什么时候放进去的呢
     protected final Map<ConsumerId, Subscription> subscriptions = new ConcurrentHashMap<ConsumerId, Subscription>();
     protected final SystemUsage usageManager;
     protected final DestinationFactory destinationFactory;

@@ -20,6 +20,7 @@ package org.apache.activemq.command;
  * @openwire:marshaller code="120"
  * 
  */
+//就记录了一个连接的id 很浪费呀
 public class ConnectionId implements DataStructure, Comparable<ConnectionId> {
 
     public static final byte DATA_STRUCTURE_TYPE = CommandTypes.CONNECTION_ID;

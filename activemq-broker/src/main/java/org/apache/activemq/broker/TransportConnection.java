@@ -585,6 +585,7 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
         return null;
     }
 
+    //主动拉消息
     @Override
     public Response processMessagePull(MessagePull pull) throws Exception {
         return broker.messagePull(lookupConnectionState(pull.getConsumerId()).getContext(), pull);

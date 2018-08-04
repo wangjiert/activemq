@@ -511,6 +511,7 @@ public class RegionBroker extends EmptyBroker {
     @Override
     public Response messagePull(ConnectionContext context, MessagePull pull) throws Exception {
         ActiveMQDestination destination = pull.getDestination();
+        //region就是queue region,集成了 abstract region
         return getRegion(destination).messagePull(context, pull);
     }
 

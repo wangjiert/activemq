@@ -100,6 +100,7 @@ public abstract class BaseDestination implements Destination {
     private long inactiveTimeoutBeforeGC = DEFAULT_INACTIVE_TIMEOUT_BEFORE_GC;
     private boolean gcIfInactive;
     private boolean gcWithNetworkConsumers;
+    //这个是记录什么的 每次新加订阅者时都会重置
     private long lastActiveTime=0l;
     private boolean reduceMemoryFootprint = false;
     protected final Scheduler scheduler;
@@ -255,8 +256,12 @@ public abstract class BaseDestination implements Destination {
     }
 
     @Override
+    //传进来两个参数又不用 不知道是为什么
     public void addSubscription(ConnectionContext context, Subscription sub) throws Exception{
+        //增加用户的统计量 应该是一个地址一个统计对象吧
+        //新加了一个地址 一般来说就是一个新用户进来了 而新用户的消费地址有恰好是之前就有的 所以这个地址上的消费者数量加一
         destinationStatistics.getConsumers().increment();
+        //为什么新加了一个地址进来就把激活时间重置了呢
         this.lastActiveTime=0l;
     }
 

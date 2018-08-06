@@ -99,6 +99,7 @@ public class RegionBroker extends EmptyBroker {
 
     private final CopyOnWriteArrayList<Connection> connections = new CopyOnWriteArrayList<Connection>();
     private final Map<ActiveMQDestination, ActiveMQDestination> destinationGate = new HashMap<ActiveMQDestination, ActiveMQDestination>();
+    //分别是什么类型 应该前面的是标准的jms地址 后面的应该是broker里面的地址
     private final Map<ActiveMQDestination, Destination> destinations = new ConcurrentHashMap<ActiveMQDestination, Destination>();
     private final Map<BrokerId, BrokerInfo> brokerInfos = new HashMap<BrokerId, BrokerInfo>();
 
@@ -324,6 +325,9 @@ public class RegionBroker extends EmptyBroker {
 
         Destination answer;
 
+        //如果已经添加过了 就直接返回了
+        //既然不会有重复的地址进来 那么订阅怎么会扫描到和这个地址相同的订阅呢
+        //难道是jms的地址和broker内的地址是多对一的关系吗
         answer = destinations.get(destination);
         if (answer != null) {
             return answer;
@@ -335,6 +339,11 @@ public class RegionBroker extends EmptyBroker {
                 return answer;
             }
 
+            //首先什么时候往里面加的
+            //既然已经知道了集合里面已经加了 那么不停的睡眠是在等谁会从集合里面拿走
+            //todo 找到这个集合真正处理的地方
+            //在下面的模块中会从集合里面删除这个地址 但是还是没看到是在哪里加进去的呀
+            //奇了怪了 搜整个项目也没看到是在哪加进去的
             if (destinationGate.get(destination) != null) {
                 // Guard against spurious wakeup.
                 while (destinationGate.containsKey(destination)) {

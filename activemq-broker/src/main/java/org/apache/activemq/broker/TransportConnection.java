@@ -601,6 +601,7 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
     }
 
     @Override
+    //从后面来看 这里可能会新加同一个地址进来
     public Response processAddDestination(DestinationInfo info) throws Exception {
         TransportConnectionState cs = lookupConnectionState(info.getConnectionId());
         broker.addDestinationInfo(cs.getContext(), info);

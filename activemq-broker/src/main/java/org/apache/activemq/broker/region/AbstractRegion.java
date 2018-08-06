@@ -140,6 +140,7 @@ public abstract class AbstractRegion implements Region {
     }
 
     @Override
+    //一个broker只有一个这个对象 所以所有的地址都是共享的 会被所有的连接看到
     public Destination addDestination(ConnectionContext context, ActiveMQDestination destination,
             boolean createIfTemporary) throws Exception {
 
@@ -237,8 +238,10 @@ public abstract class AbstractRegion implements Region {
     protected List<Subscription> addSubscriptionsForDestination(ConnectionContext context, Destination dest) throws Exception {
         List<Subscription> rc = new ArrayList<Subscription>();
         // Add all consumers that are interested in the destination.
+        //奇了怪了 到底是什么时候加进去的呢
         for (Iterator<Subscription> iter = subscriptions.values().iterator(); iter.hasNext();) {
             Subscription sub = iter.next();
+            //扫描所有的订阅者 找到订阅地址和添加的地址相同的订阅者
             if (sub.matches(dest.getActiveMQDestination())) {
                 try {
                     ConnectionContext originalContext = sub.getContext() != null ? sub.getContext() : context;

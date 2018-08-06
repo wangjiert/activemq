@@ -439,6 +439,8 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
     ConcurrentLinkedQueue<BrowserDispatch> browserDispatches = new ConcurrentLinkedQueue<BrowserDispatch>();
 
     @Override
+    //给一个地址添加订阅者
+    //这是从订阅者里面找到的对应地址的订阅 关键是最开始的订阅是从何而来呢
     public void addSubscription(ConnectionContext context, Subscription sub) throws Exception {
         LOG.debug("{} add sub: {}, dequeues: {}, dispatched: {}, inflight: {}", new Object[]{ getActiveMQDestination().getQualifiedName(), sub, getDestinationStatistics().getDequeues().getCount(), getDestinationStatistics().getDispatched().getCount(), getDestinationStatistics().getInflight().getCount() });
 

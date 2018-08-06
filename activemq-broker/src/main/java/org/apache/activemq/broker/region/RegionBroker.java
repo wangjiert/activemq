@@ -256,6 +256,7 @@ public class RegionBroker extends EmptyBroker {
         ConnectionContext oldContext = null;
 
         synchronized (clientIdSet) {
+            //客户id和连接上下文的集合
             oldContext = clientIdSet.get(clientId);
             if (oldContext != null) {
                 if (context.isAllowLinkStealing()) {

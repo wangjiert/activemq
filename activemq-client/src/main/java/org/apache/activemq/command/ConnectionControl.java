@@ -34,6 +34,8 @@ public class ConnectionControl extends BaseCommand {
     protected String connectedBrokers="";
     protected String reconnectTo = "";
     protected byte[] token;
+    //应该是表示这个连接能不能改变消息发送的顺序
+    //如果是一个重新连接那么肯定是false
     protected boolean rebalanceConnection;
 
     public byte getDataStructureType() {

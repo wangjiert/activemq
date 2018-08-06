@@ -120,10 +120,12 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
     protected final Map<ConnectionId, ConnectionState> brokerConnectionStates;
     // The broker and wireformat info that was exchanged.
     protected BrokerInfo brokerInfo;
+    //看来里面存的是broker发送到客户端的消息
     protected final List<Command> dispatchQueue = new LinkedList<>();
     protected TaskRunner taskRunner;
     protected final AtomicReference<Throwable> transportException = new AtomicReference<>();
     protected AtomicBoolean dispatchStopped = new AtomicBoolean(false);
+    //好好看一下是不是每个连接都会有一个新建的这个对象
     private final Transport transport;
     private MessageAuthorizationPolicy messageAuthorizationPolicy;
     private WireFormatInfo wireFormatInfo;
@@ -142,6 +144,7 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
     private final AtomicBoolean pendingStop = new AtomicBoolean();
     private long timeStamp;
     private final AtomicBoolean stopping = new AtomicBoolean(false);
+    //在关闭之后会把这个东西减一
     private final CountDownLatch stopped = new CountDownLatch(1);
     private final AtomicBoolean asyncException = new AtomicBoolean(false);
     private final Map<ProducerId, ProducerBrokerExchange> producerExchanges = new HashMap<>();
@@ -733,11 +736,13 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
     }
 
     @Override
+    //难以想象的简单啊
     public Response processAddSession(SessionInfo info) throws Exception {
         ConnectionId connectionId = info.getSessionId().getParentId();
         TransportConnectionState cs = lookupConnectionState(connectionId);
         // Avoid replaying dup commands
         if (cs != null && !cs.getSessionIds().contains(info.getSessionId())) {
+            //什么都没做
             broker.addSession(cs.getContext(), info);
             try {
                 cs.addSession(info);
@@ -788,11 +793,13 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
         // Older clients should have been defaulting this field to true.. but
         // they were not.
         if (wireFormatInfo != null && wireFormatInfo.getVersion() <= 2) {
+            //这是什么 看起来像是集群一样的
             info.setClientMaster(true);
         }
         TransportConnectionState state;
         // Make sure 2 concurrent connections by the same ID only generate 1
         // TransportConnectionState object.
+        //同一个连接来多次 会直接删掉之前的连接状态
         synchronized (brokerConnectionStates) {
             state = (TransportConnectionState) brokerConnectionStates.get(info.getConnectionId());
             if (state == null) {
@@ -813,10 +820,14 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
                 state.reset(info);
             }
         }
+        //会返回之前注册的状态对象
         registerConnectionState(info.getConnectionId(), state);
         LOG.debug("Setting up new connection id: {}, address: {}, info: {}", new Object[]{ info.getConnectionId(), getRemoteAddress(), info });
+        //这个连接是socket初始化的连接 会把客户端新建的消息连接的错误容忍属性赋给这个transport连接
+        //为什么已经放在连接上下文了 还要给这个transport connection也赋值
         this.faultTolerantConnection = info.isFaultTolerant();
         // Setup the context.
+        //每个连接才有一个客户端id
         String clientId = info.getClientId();
         context = new ConnectionContext();
         context.setBroker(broker);
@@ -837,6 +848,7 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
         state.setContext(context);
         state.setConnection(this);
         if (info.getClientIp() == null) {
+            //看来是否设置客户端ip是用户自己决定的 框架本身是没有管的
             info.setClientIp(getRemoteAddress());
         }
 
@@ -853,13 +865,18 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
             delayedStop(2000, "Failed with SecurityException: " + e.getLocalizedMessage(), e);
             throw e;
         }
+        //这是什么意思 连接是否能够被控制吗
         if (info.isManageable()) {
             // send ConnectionCommand
+            //这个东西本身好像是不干嘛的  只是一种消息 实现的功能还是靠消息处理的时候进行相应的操作
             ConnectionControl command = this.connector.getConnectionControl();
             command.setFaultTolerant(broker.isFaultTolerantConfiguration());
             if (info.isFailoverReconnect()) {
                 command.setRebalanceConnection(false);
             }
+            //这里已经是broker内部了  消息发给谁呢 为什么不直接调相应方法呢
+            //根据代码猜测 应该是把消息写到了磁盘 然后将消息发送给客户端
+            //一个大胆的猜测:消息发送的时候会从磁盘取出这个消息 然后根据里面的数据决定消息发送的客户端顺序 至于为什么吧这个消息发送个客户端 目前还不是很明白
             dispatchAsync(command);
         }
         return null;
@@ -935,6 +952,7 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
     public void dispatchAsync(Command message) {
         if (!stopping.get()) {
             if (taskRunner == null) {
+                //没有线程池的话就直接发送
                 dispatchSync(message);
             } else {
                 synchronized (dispatchQueue) {
@@ -946,7 +964,7 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
                     Thread.currentThread().interrupt();
                 }
             }
-        } else {
+        } else {//这个连接正在被关闭
             if (message.isMessageDispatch()) {
                 MessageDispatch md = (MessageDispatch) message;
                 TransmitCallback sub = md.getTransmitCallback();
@@ -1127,6 +1145,7 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
         }
     }
 
+    //还传个原因是干嘛呢  难道是为了打印吗
     public void stopAsync(Throwable cause) {
         transportException.set(cause);
         stopAsync();
@@ -1136,18 +1155,26 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
         // If we're in the middle of starting then go no further... for now.
         synchronized (this) {
             pendingStop.set(true);
+            //表示正在启动
+            //能够直接返回说明启动的时候应该会检查pendingStop 如果为true就会停止启动
             if (starting.get()) {
                 LOG.debug("stopAsync() called in the middle of start(). Delaying till start completes..");
                 return;
             }
         }
+        //如果正在被关就不处理
+        //一个connect会做什么呢 不停的读取数据然后处理数据吗
         if (stopping.compareAndSet(false, true)) {
             // Let all the connection contexts know we are shutting down
             // so that in progress operations can notice and unblock.
+            //不出意料就是获取所有的连接id,但是我只是关闭一个连接通知所以连接关闭是几个意思
+            //分析来讲这是不可能的 所以说应该就是返回了一个连接状态,map的那个register不知道是什么时候用的
             List<TransportConnectionState> connectionStates = listConnectionStates();
+            //这种foreach循环好像底层会被翻译成通过迭代器不停的取数据
             for (TransportConnectionState cs : connectionStates) {
                 ConnectionContext connectionContext = cs.getContext();
                 if (connectionContext != null) {
+                    //连接上下文做了什么事吗 应该是有其他东西在用这个标志来判断吧
                     connectionContext.getStopping().set(true);
                 }
             }
@@ -1180,10 +1207,12 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
 
     protected void doStop() throws Exception {
         LOG.debug("Stopping connection: {}", transport.getRemoteAddress());
+        //就是简单的从一个集合里面删除这个连接
         connector.onStopped(this);
         try {
             synchronized (this) {
                 if (duplexBridge != null) {
+                    //看名字像是一个用于备份的对象 todo 留待以后研究
                     duplexBridge.stop();
                 }
             }
@@ -1191,12 +1220,18 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
             LOG.trace("Exception caught stopping. This exception is ignored.", ignore);
         }
         try {
+            //在逗我的吧 停一个连接 怎么会停transport
+            //todo 需要看一下transport是不是每个broker只有一个还是每个连接都会创建一个新的
+            //感觉这个transport应该是一个transport server收到新的连接之后 新建了一个transport client对象
             transport.stop();
             LOG.debug("Stopped transport: {}", transport.getRemoteAddress());
         } catch (Exception e) {
             LOG.debug("Could not stop transport to {}. This exception is ignored.", transport.getRemoteAddress(), e);
         }
         if (taskRunner != null) {
+            //nb啊 就给了一秒钟去关线程池
+            //可以学习一下别人是怎么关闭线程池的 主要是看线程池关闭的时候怎么等待所有提交的任务完成
+            //这里用的根本不是线程池
             taskRunner.shutdown(1);
             taskRunner = null;
         }
@@ -1204,13 +1239,17 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
         // Run the MessageDispatch callbacks so that message references get
         // cleaned up.
         synchronized (dispatchQueue) {
+            //这个里面放的其他命令就被丢了吗
+            //这个里面的命令是客户端发给broker的还是broker发给客户端的
             for (Iterator<Command> iter = dispatchQueue.iterator(); iter.hasNext(); ) {
                 Command command = iter.next();
                 if (command.isMessageDispatch()) {
                     MessageDispatch md = (MessageDispatch) command;
                     TransmitCallback sub = md.getTransmitCallback();
+                    //什么都没做
                     broker.postProcessDispatch(md);
                     if (sub != null) {
+                        //不知道在干嘛 等看客户端拉消息的时候在研究
                         sub.onFailure();
                     }
                 }
@@ -1221,6 +1260,7 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
         // Remove all logical connection associated with this connection
         // from the broker.
         if (!broker.isStopped()) {
+            //这个不是之前做过了吗
             List<TransportConnectionState> connectionStates = listConnectionStates();
             connectionStates = listConnectionStates();
             for (TransportConnectionState cs : connectionStates) {
@@ -1636,6 +1676,8 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
     protected synchronized TransportConnectionState registerConnectionState(ConnectionId connectionId,
                                                                             TransportConnectionState state) {
         TransportConnectionState cs = null;
+        //已经有一个连接状态了并且现有的注册对象不能处理多个状态对象 这个时候就会把注册对象改为map的实现
+        //明明前面加了处理 一个连接只会存在一个状态对象 这里又是干什么呢
         if (!connectionStateRegister.isEmpty() && !connectionStateRegister.doesHandleMultipleConnectionStates()) {
             // swap implementations
             TransportConnectionStateRegister newRegister = new MapTransportConnectionStateRegister();

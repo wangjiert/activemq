@@ -43,6 +43,7 @@ import org.slf4j.LoggerFactory;
 public class TaskRunnerFactory implements Executor {
 
     private static final Logger LOG = LoggerFactory.getLogger(TaskRunnerFactory.class);
+    //如果不使用池的话就为空
     private final AtomicReference<ExecutorService> executorRef = new AtomicReference<>();
     private int maxIterationsPerRun;
     private String name;
@@ -51,6 +52,7 @@ public class TaskRunnerFactory implements Executor {
     private final AtomicLong id = new AtomicLong(0);
     private boolean dedicatedTaskRunner;
     private long shutdownAwaitTermination = 30000;
+    //初始化完了没有
     private final AtomicBoolean initDone = new AtomicBoolean(false);
     private int maxThreadPoolSize = getDefaultMaximumPoolSize();
     private RejectedExecutionHandler rejectedTaskHandler = null;
@@ -82,17 +84,20 @@ public class TaskRunnerFactory implements Executor {
     }
 
     public void init() {
+        //已经初始化了就直接返回了
         if (!initDone.get()) {
             // If your OS/JVM combination has a good thread model, you may want to
             // avoid using a thread pool to run tasks and use a DedicatedTaskRunner instead.
             //AMQ-6602 - lock instead of using compareAndSet to prevent threads from seeing a null value
             //for executorRef inside createTaskRunner() on contention and creating a DedicatedTaskRunner
             synchronized(this) {
+                //防止获取锁期间有一个线程已经初始化了
                 //need to recheck if initDone is true under the lock
                 if (!initDone.get()) {
                     if (dedicatedTaskRunner || "true".equalsIgnoreCase(System.getProperty("org.apache.activemq.UseDedicatedTaskRunner"))) {
                         executorRef.set(null);
                     } else {
+                        //需要这么安全的吗 已经判断了没有初始化才进来的 怎么会不为空呢
                         executorRef.compareAndSet(null, createDefaultExecutor());
                     }
                     LOG.debug("Initialized TaskRunnerFactory[{}] using ExecutorService: {}", name, executorRef.get());
@@ -172,6 +177,7 @@ public class TaskRunnerFactory implements Executor {
         if (executor != null) {
             executor.execute(runnable);
         } else {
+            //还有这样的机器吗 不停的创建线程对象也不影响性能
             doExecuteNewThread(runnable, name);
         }
     }

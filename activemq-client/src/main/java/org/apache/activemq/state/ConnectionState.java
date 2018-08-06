@@ -100,6 +100,7 @@ public class ConnectionState {
         return transactions.remove(id);
     }
 
+    //这里有什么意义吗 我只是创建个连接 偏偏还自动创建一个session
     public void addSession(SessionInfo info) {
         checkShutdown();
         sessions.put(info.getSessionId(), new SessionState(info));

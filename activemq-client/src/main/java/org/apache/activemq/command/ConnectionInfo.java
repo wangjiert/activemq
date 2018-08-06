@@ -37,6 +37,7 @@ public class ConnectionInfo extends BaseCommand {
     protected boolean manageable;
     protected boolean clientMaster = true;
     protected boolean faultTolerant = false;
+    //应该是表示这个连接是不是因为连接失败之后又用另一个uri进行的连接
     protected boolean failoverReconnect;
     protected transient Object transportContext;
 

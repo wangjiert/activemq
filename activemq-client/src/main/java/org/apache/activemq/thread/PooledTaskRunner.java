@@ -91,6 +91,7 @@ class PooledTaskRunner implements TaskRunner {
      * @throws InterruptedException
      */
     @Override
+
     public void shutdown(long timeout) throws InterruptedException {
         LOG.trace("Shutdown timeout: {} task: {}", timeout, task);
         synchronized (runable) {
@@ -99,6 +100,8 @@ class PooledTaskRunner implements TaskRunner {
             // because a call to iterate can result in
             // shutDown() being called, which would wait forever
             // waiting for iterating to finish
+            //这个判断是不是本线程在执行感觉没啥用啊
+            //是不是在迭代任务的时候 通过判断shutdown一直循环调用吗
             if (runningThread != Thread.currentThread()) {
                 if (iterating) {
                     runable.wait(timeout);

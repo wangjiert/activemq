@@ -66,7 +66,9 @@ public class TransportConnector implements Connector, BrokerServiceAware {
     private boolean disableAsyncDispatch;
     private boolean enableStatusMonitor = false;
     private Broker broker;
+    //看不懂
     private boolean updateClusterClients = false;
+    //这是个啥
     private boolean rebalanceClusterClients;
     private boolean updateClusterClientsOnRemove = false;
     private String updateClusterFilter;
@@ -76,6 +78,7 @@ public class TransportConnector implements Connector, BrokerServiceAware {
     private PublishedAddressPolicy publishedAddressPolicy = new PublishedAddressPolicy();
     private boolean allowLinkStealing;
 
+    //这里面放的都是些啥啊
     LinkedList<String> peerBrokers = new LinkedList<String>();
 
     public TransportConnector() {
@@ -390,6 +393,7 @@ public class TransportConnector implements Connector, BrokerServiceAware {
     }
 
     protected ConnectionControl getConnectionControl() {
+        //看起来像是在做负载均衡
         boolean rebalance = isRebalanceClusterClients();
         String connectedBrokers = "";
         String separator = "";
@@ -402,6 +406,8 @@ public class TransportConnector implements Connector, BrokerServiceAware {
                 }
 
                 if (rebalance) {
+                    //把第一个放到最后 感觉是在负载均衡 好像在哪看到过
+                    //没猜错的话应该是根据这个集合里面的顺序发送消息吧
                     String shuffle = peerBrokers.removeFirst();
                     peerBrokers.addLast(shuffle);
                 }

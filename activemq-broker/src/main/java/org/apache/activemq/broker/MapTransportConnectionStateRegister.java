@@ -53,6 +53,7 @@ public class MapTransportConnectionStateRegister  implements TransportConnection
     public List<TransportConnectionState> listConnectionStates() {
     	
         List<TransportConnectionState> rc = new ArrayList<TransportConnectionState>();
+        //能用connectionId做key说明应该就是缓存了所有的连接状态
         rc.addAll(connectionStates.values());
         return rc;
     }

@@ -26,6 +26,8 @@ public class SessionId implements DataStructure {
     public static final byte DATA_STRUCTURE_TYPE = CommandTypes.SESSION_ID;
 
     protected String connectionId;
+    //value等于-1的时候有点特殊啊
+    //表示是创建连接的时候直接创建的
     protected long value;
 
     protected transient int hashCode;

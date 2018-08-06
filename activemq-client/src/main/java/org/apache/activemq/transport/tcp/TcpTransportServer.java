@@ -78,6 +78,7 @@ public class TcpTransportServer extends TransportServerThreadSupport implements 
     protected long maxInactivityDurationInitalDelay = 10000;
     protected int minmumWireFormatVersion;
     protected boolean useQueueForAccept = true;
+    //是否允许客户端的连接上下文进行覆盖
     protected boolean allowLinkStealing;
 
     /**

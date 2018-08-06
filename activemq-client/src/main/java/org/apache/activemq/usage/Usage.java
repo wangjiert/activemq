@@ -52,6 +52,7 @@ public abstract class Usage<T extends Usage> implements Service {
     private final boolean debug = LOG.isDebugEnabled();
     private float usagePortion = 1.0f;
     private final List<T> children = new CopyOnWriteArrayList<T>();
+    //什么时候回调呢
     private final List<Runnable> callbacks = new LinkedList<Runnable>();
     private int pollingTime = 100;
     private final AtomicBoolean started = new AtomicBoolean();
@@ -393,9 +394,11 @@ public abstract class Usage<T extends Usage> implements Service {
                 public void run() {
                     usageLock.writeLock().lock();
                     try {
-                        if (percentUsage >= 100) {
+                        if (percentUsage >= 100) {//父类满了 子类也满了
                             callbacks.add(callback);
-                        } else {
+                        } else {//父类满了 子类没有满
+                            //为什么这种情况需要直接调用
+                            //本来就是使用不满的时候的回调 这个时候子类并没有满 所以直接回调
                             callback.run();
                         }
                     } finally {

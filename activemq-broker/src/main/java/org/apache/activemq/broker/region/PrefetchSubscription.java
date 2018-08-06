@@ -83,15 +83,22 @@ public abstract class PrefetchSubscription extends AbstractSubscription {
      * Allows a message to be pulled on demand by a client
      */
     @Override
+    //整个对象都是一个消费者独有的
     public Response pullMessage(ConnectionContext context, final MessagePull pull) throws Exception {
         // The slave should not deliver pull messages.
         // TODO: when the slave becomes a master, He should send a NULL message to all the
         // consumers to 'wake them up' in case they were waiting for a message.
+        //消费者一般不会把这个值设为0吧，这个值表示消费者每次可以收到的消息数
+        //我怀疑是不是在处理确认消息的时候 broker就会主动发送消息给消费者 所以这里只是处理了预取数量为0的情况
         if (getPrefetchSize() == 0) {
+            //只是记录了一个整数 应该是记录的要取多少条数据
+            //如果说要取多少条数据是由pull自己携带的数据决定 这是否说明消费者的预取数量本身设置只会是0
             prefetchExtension.set(pull.getQuantity());
+            //这里记录的应该是已经发送了多少条数据
             final long dispatchCounterBeforePull = getSubscriptionStatistics().getDispatched().getCount();
 
             // Have the destination push us some messages.
+            //看来一个消费者是可以同时消费多个消息地址的
             for (Destination dest : destinations) {
                 dest.iterate();
             }

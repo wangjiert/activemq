@@ -134,6 +134,7 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
     private int timeBeforeDispatchStarts = 0;
     private int consumersBeforeDispatchStarts = 0;
     private CountDownLatch consumersBeforeStartsLatch;
+    //显示有多少个阻塞
     private final AtomicLong pendingWakeups = new AtomicLong();
     private boolean allConsumersExclusiveByDefault = false;
 
@@ -776,6 +777,8 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
         // get called..
         if (!memoryUsage.notifyCallbackWhenNotFull(sendMessagesWaitingForSpaceTask)) {
             // so call it directly here.
+            //当使用容量没有满时直接回调
+            //出现这种情况说明 有新的空间释放
             sendMessagesWaitingForSpaceTask.run();
         }
     }

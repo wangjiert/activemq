@@ -584,7 +584,9 @@ public abstract class PrefetchSubscription extends AbstractSubscription {
     @Override
     public void add(ConnectionContext context, Destination destination) throws Exception {
         synchronized(pendingLock) {
+            //添加这个地址到订阅的地址集合中
             super.add(context, destination);
+            //需要看一下具体是哪个实现类
             pending.add(context, destination);
         }
     }

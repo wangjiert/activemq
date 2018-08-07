@@ -167,6 +167,7 @@ public class BrokerService implements Service {
     private String brokerName = DEFAULT_BROKER_NAME;
     private File dataDirectoryFile;
     private File tmpDataDirectory;
+    //看起来像是全局的
     private Broker broker;
     private BrokerView adminView;
     private ManagementContext managementContext;

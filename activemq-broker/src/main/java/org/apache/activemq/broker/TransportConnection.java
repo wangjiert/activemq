@@ -630,6 +630,7 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
             throw new IllegalStateException("Cannot add a producer to a connection that had not been registered: "
                     + connectionId);
         }
+        //添加session的时候有添加过这个
         SessionState ss = cs.getSessionState(sessionId);
         if (ss == null) {
             throw new IllegalStateException("Cannot add a producer to a session that had not been registered: "
@@ -641,6 +642,8 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
             // Do not check for null here as it would cause the count of max producers to exclude
             // anonymous producers.  The isAdvisoryTopic method checks for null so it is safe to
             // call it from here with a null Destination value.
+            //地址不是用于存放通知消息时要做的处理
+            //只是判断了一下一个连接下的消费者数量是否超过最大值
             if (!AdvisorySupport.isAdvisoryTopic(destination)) {
                 if (getProducerCount(connectionId) >= connector.getMaximumProducersAllowedPerConnection()){
                     throw new IllegalStateException("Can't add producer on connection " + connectionId + ": at maximum limit: " + connector.getMaximumProducersAllowedPerConnection());
@@ -648,6 +651,7 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
             }
             broker.addProducer(cs.getContext(), info);
             try {
+                //就是新加了一个消费者状态对象
                 ss.addProducer(info);
             } catch (IllegalStateException e) {
                 broker.removeProducer(cs.getContext(), info);
@@ -701,6 +705,7 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
 
             broker.addConsumer(cs.getContext(), info);
             try {
+                //只是加一个状态对象
                 ss.addConsumer(info);
                 addConsumerBrokerExchange(cs, info.getConsumerId());
             } catch (IllegalStateException e) {

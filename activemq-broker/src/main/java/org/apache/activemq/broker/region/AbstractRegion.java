@@ -62,6 +62,7 @@ public abstract class AbstractRegion implements Region {
     private static final Logger LOG = LoggerFactory.getLogger(AbstractRegion.class);
 
     protected final Map<ActiveMQDestination, Destination> destinations = new ConcurrentHashMap<ActiveMQDestination, Destination>();
+    //都在里面取数据没看到什么时候放进去的
     protected final DestinationMap destinationMap = new DestinationMap();
     //拉消息的时候是直接在map里面拿,什么时候放进去的呢
     protected final Map<ConsumerId, Subscription> subscriptions = new ConcurrentHashMap<ConsumerId, Subscription>();
@@ -73,6 +74,7 @@ public abstract class AbstractRegion implements Region {
     protected boolean autoCreateDestinations = true;
     protected final TaskRunnerFactory taskRunnerFactory;
     protected final ReentrantReadWriteLock destinationsLock = new ReentrantReadWriteLock();
+    //添加消费者的时候往这个集合里面加了东西 暂时没看到怎么用
     protected final Map<ConsumerId, Object> consumerChangeMutexMap = new HashMap<ConsumerId, Object>();
     protected boolean started;
 
@@ -146,6 +148,9 @@ public abstract class AbstractRegion implements Region {
 
         destinationsLock.writeLock().lock();
         try {
+            //这个对象一个broker只有一个 然后这个对象又缓存了地址;很明显这个集合缓存了全部的地址 那么肯定有重复的地址进来的
+            //这里又没有处理已经添加过的地址 还是说这里做的东西只需要做一次 订阅是在添加用户的时候添加的 同一个地址对应的不同用户
+            //应该是直接可以加进来的 所以导致了订阅里面有这个地址对应的订阅存在吗
             Destination dest = destinations.get(destination);
             if (dest == null) {
                 if (destination.isTemporary() == false || createIfTemporary) {
@@ -160,6 +165,7 @@ public abstract class AbstractRegion implements Region {
                     if (destinationInterceptor != null) {
                         dest = destinationInterceptor.intercept(dest);
                     }
+                    //里面做了不少事啊
                     dest.start();
                     addSubscriptionsForDestination(context, dest);
                     destinations.put(destination, dest);
@@ -239,6 +245,8 @@ public abstract class AbstractRegion implements Region {
         List<Subscription> rc = new ArrayList<Subscription>();
         // Add all consumers that are interested in the destination.
         //奇了怪了 到底是什么时候加进去的呢
+        //添加消费者的时候进去的
+        //看这里的逻辑应该是订阅在这之前就要添加进去  难道是在初始化的时候有过相应的处理吗
         for (Iterator<Subscription> iter = subscriptions.values().iterator(); iter.hasNext();) {
             Subscription sub = iter.next();
             //扫描所有的订阅者 找到订阅地址和添加的地址相同的订阅者
@@ -343,6 +351,7 @@ public abstract class AbstractRegion implements Region {
         ActiveMQDestination destination = info.getDestination();
         if (destination != null && !destination.isPattern() && !destination.isComposite()) {
             // lets auto-create the destination
+            //创建地址
             lookup(context, destination,true);
         }
 
@@ -377,6 +386,7 @@ public abstract class AbstractRegion implements Region {
             //
             DestinationFilter.parseFilter(info.getDestination());
 
+            //总算看到了在哪新建订阅了
             Subscription sub = createSubscription(context, info);
 
             // At this point we're done directly manipulating subscriptions,

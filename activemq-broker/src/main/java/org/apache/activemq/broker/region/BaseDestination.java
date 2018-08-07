@@ -246,6 +246,7 @@ public abstract class BaseDestination implements Destination {
 
     @Override
     public void addProducer(ConnectionContext context, ProducerInfo info) throws Exception {
+        //应该是找到了所有的broker内部地址 然后将这个地址中的生产者数量加1
         destinationStatistics.getProducers().increment();
         this.lastActiveTime=0l;
     }

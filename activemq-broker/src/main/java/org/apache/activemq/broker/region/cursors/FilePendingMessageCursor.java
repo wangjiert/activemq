@@ -57,8 +57,11 @@ public class FilePendingMessageCursor extends AbstractPendingMessageCursor imple
     protected Broker broker;
     private final PListStore store;
     private final String name;
+    //很明显内存相关的一个对象
     private PendingList memoryList;
+    //这个东西应该是直接和store相关的
     private PList diskList;
+    //获取消息最重要的对象
     private Iterator<MessageReference> iter;
     private Destination regionDestination;
     private boolean iterating;
@@ -134,6 +137,7 @@ public class FilePendingMessageCursor extends AbstractPendingMessageCursor imple
      * reset the cursor
      */
     @Override
+    //状态设为正在运行
     public synchronized void reset() {
         iterating = true;
         last = null;
@@ -466,6 +470,7 @@ public class FilePendingMessageCursor extends AbstractPendingMessageCursor imple
     }
 
     protected boolean isDiskListEmpty() {
+        //判断持久化设备上是否有消息吗 不太像啊
         return diskList == null || diskList.isEmpty();
     }
 

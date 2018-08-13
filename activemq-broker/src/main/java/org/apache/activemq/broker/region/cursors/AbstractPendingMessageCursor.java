@@ -38,6 +38,7 @@ import org.apache.activemq.usage.SystemUsage;
  */
 public abstract class AbstractPendingMessageCursor implements PendingMessageCursor {
     protected int memoryUsageHighWaterMark = 70;
+    //需要读多少条消息出来
     protected int maxBatchSize = BaseDestination.MAX_PAGE_SIZE;
     protected SystemUsage systemUsage;
     protected int maxProducersToAudit = BaseDestination.MAX_PRODUCERS_TO_AUDIT;

@@ -366,6 +366,7 @@ public class RegionBroker extends EmptyBroker {
                 create = createIfTemp;
             }
             //以queue region为例
+            //等同于一个单例  地址在这里仅仅是提供了一个类型 并不是说每一个地址都去创建一个broker内部的地址
             answer = getRegion(destination).addDestination(context, destination, create);
             destinations.put(destination, answer);
         } finally {
@@ -447,6 +448,7 @@ public class RegionBroker extends EmptyBroker {
         }
         inactiveDestinationsPurgeLock.readLock().lock();
         try {
+            //之前添加地址的时候已经加入了jms地址月broker内部地址的一一对应
             return getRegion(destination).addConsumer(context, info);
         } finally {
             inactiveDestinationsPurgeLock.readLock().unlock();

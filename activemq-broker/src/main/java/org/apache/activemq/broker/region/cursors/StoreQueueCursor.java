@@ -32,10 +32,17 @@ public class StoreQueueCursor extends AbstractPendingMessageCursor {
 
     private static final Logger LOG = LoggerFactory.getLogger(StoreQueueCursor.class);
     private final Broker broker;
+    //明明取的是两个cursor的和
     private int pendingCount;
     private final Queue queue;
+    //感觉这个是放在内存中的消息缓冲
+    //下面初始化明明是放在文件中的 为什么要加non在变量前面 看来下面的应该就是在最终存放消息的地方
     private PendingMessageCursor nonPersistent;
+    //这不是预取吗 难道说这个是放在持久化中的消息缓冲
     private final QueueStorePrefetch persistent;
+    //这个是综合上面两个的吗
+    //取消息的时候首先是从这里取的
+    //这个东西和交换的被赋值为persistent和nonPersistent
     private PendingMessageCursor currentCursor;
 
     /**
@@ -128,6 +135,7 @@ public class StoreQueueCursor extends AbstractPendingMessageCursor {
     @Override
     public synchronized boolean hasNext() {
         try {
+            //就是给currentCursor赋值
             getNextCursor();
         } catch (Exception e) {
             LOG.error("Failed to get current cursor ", e);
@@ -225,6 +233,7 @@ public class StoreQueueCursor extends AbstractPendingMessageCursor {
     public PendingMessageCursor getPersistent() { return  this.persistent; }
 
     @Override
+    //这个方法只是设置一次取多少消息吧
     public void setMaxBatchSize(int maxBatchSize) {
         persistent.setMaxBatchSize(maxBatchSize);
         if (nonPersistent != null) {

@@ -240,12 +240,15 @@ public class Journal {
     private DataFileRemovedListener dataFileRemovedListener;
 
     public synchronized void start() throws IOException {
+        //防止多次启动
         if (started) {
             return;
         }
 
+        //启动时间
         long start = System.currentTimeMillis();
         accessorPool = new DataFileAccessorPool(this);
+        //这么快就设为true了吗 明明还没启动啊
         started = true;
 
         appender = callerBufferAppender ? new CallerBufferingDataFileAppender(this) : new DataFileAppender(this);

@@ -695,6 +695,7 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
                     + " Cannot add a consumer to a session that had not been registered: " + sessionId);
         }
         // Avoid replaying dup commands
+        //只有新的消费者加进来才处理
         if (!ss.getConsumerIds().contains(info.getConsumerId())) {
             ActiveMQDestination destination = info.getDestination();
             if (destination != null && !AdvisorySupport.isAdvisoryTopic(destination)) {

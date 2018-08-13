@@ -63,6 +63,7 @@ public abstract class AbstractRegion implements Region {
 
     protected final Map<ActiveMQDestination, Destination> destinations = new ConcurrentHashMap<ActiveMQDestination, Destination>();
     //都在里面取数据没看到什么时候放进去的
+    //key应该是jms的地址 value应该是broker内部的地址
     protected final DestinationMap destinationMap = new DestinationMap();
     //拉消息的时候是直接在map里面拿,什么时候放进去的呢
     protected final Map<ConsumerId, Subscription> subscriptions = new ConcurrentHashMap<ConsumerId, Subscription>();
@@ -364,6 +365,7 @@ public abstract class AbstractRegion implements Region {
             }
         }
         synchronized (addGuard) {
+            //一个消费者对应一个订阅 而这个集合是在broker内部的地址对象内部的 侧面说明一个消费者是可以消费几个地址的
             Subscription o = subscriptions.get(info.getConsumerId());
             if (o != null) {
                 LOG.warn("A duplicate subscription was detected. Clients may be misbehaving. Later warnings you may see about subscription removal are a consequence of this.");
@@ -384,9 +386,11 @@ public abstract class AbstractRegion implements Region {
             // inactive state for the
             // destination which has reduced memory usage.
             //
+            //这个有什么用  找到了之后就直接丢弃了
             DestinationFilter.parseFilter(info.getDestination());
 
             //总算看到了在哪新建订阅了
+            //创建订阅加配置
             Subscription sub = createSubscription(context, info);
 
             // At this point we're done directly manipulating subscriptions,
@@ -405,12 +409,16 @@ public abstract class AbstractRegion implements Region {
                     addList.add(dest);
                 }
                 // ensure sub visible to any new dest addSubscriptionsForDestination
+                //加进去是为了后来的添加可以看到这个订阅
+                //这应该是防止再次加入同一个消费者吧
                 subscriptions.put(info.getConsumerId(), sub);
             } finally {
                 destinationsLock.readLock().unlock();
             }
 
             List<Destination> removeList = new ArrayList<Destination>();
+            //如果说这里有多个地址应该是这个正在创建的消费者消费的地址是一个匹配多个具体地址的地址吧
+            //正常应该是只有一个地址会返回
             for (Destination dest : addList) {
                 try {
                     dest.addSubscription(context, sub);

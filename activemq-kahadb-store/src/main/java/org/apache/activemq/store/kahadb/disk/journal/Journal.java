@@ -74,6 +74,7 @@ public class Journal {
     public static final byte BATCH_CONTROL_RECORD_TYPE = 2;
     // Batch Control Item holds a 4 byte size of the batch and a 8 byte checksum of the batch.
     public static final byte[] BATCH_CONTROL_RECORD_MAGIC = bytes("WRITE BATCH");
+    //4+1表示
     public static final int BATCH_CONTROL_RECORD_SIZE = RECORD_HEAD_SPACE + BATCH_CONTROL_RECORD_MAGIC.length + 4 + 8;
     public static final byte[] BATCH_CONTROL_RECORD_HEADER = createBatchControlRecordHeader();
     public static final byte[] EMPTY_BATCH_CONTROL_RECORD = createEmptyBatchControlRecordHeader();
@@ -240,16 +241,21 @@ public class Journal {
     private DataFileRemovedListener dataFileRemovedListener;
 
     public synchronized void start() throws IOException {
+        //启动只做一次
         if (started) {
             return;
         }
 
         long start = System.currentTimeMillis();
+        //需要看一下和appender有关系没
         accessorPool = new DataFileAccessorPool(this);
+        //这么早就设置为true
         started = true;
 
+        //用来写数据进入磁盘文件的对象
         appender = callerBufferAppender ? new CallerBufferingDataFileAppender(this) : new DataFileAppender(this);
 
+        //列出数据目录下所有的db-*.log文件
         File[] files = directory.listFiles(new FilenameFilter() {
             @Override
             public boolean accept(File dir, String n) {
@@ -263,7 +269,9 @@ public class Journal {
                     String n = file.getName();
                     String numStr = n.substring(filePrefix.length(), n.length()-fileSuffix.length());
                     int num = Integer.parseInt(numStr);
+                    //数字很重要 需要看一下什么时候会删除里面没有数据的文件
                     DataFile dataFile = new DataFile(file, num);
+                    //这个里面存的有点多啊
                     fileMap.put(dataFile.getDataFileId(), dataFile);
                     totalLength.addAndGet(dataFile.getLength());
                 } catch (NumberFormatException e) {
@@ -277,6 +285,9 @@ public class Journal {
             Collections.sort(l);
             for (DataFile df : l) {
                 if (df.getLength() == 0) {
+                    //空文件也不删 也不做处理
+                    //但是一个文件为什么为空呢 难道是消费一个消息之后就被删除了吗
+                    //如果是这样效率是不是有点不行啊 可以删索引 然后如果一个数据文件不被索引引用的话就把整个数据文件删掉多好
                     // possibly the result of a previous failed write
                     LOG.info("ignoring zero length, partially initialised journal data file: " + df);
                     continue;
@@ -471,6 +482,7 @@ public class Journal {
     }
 
     public boolean isUnusedPreallocated(DataFile dataFile) throws IOException {
+        //好像是一个创建一个新的数据文件时 会提前初始化下一个数据文件
         if (preallocationScope == PreallocationScope.ENTIRE_JOURNAL_ASYNC) {
             DataFileAccessor reader = accessorPool.openDataFileAccessor(dataFile);
             try {

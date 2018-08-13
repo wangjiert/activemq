@@ -38,7 +38,9 @@ public class DataFileAccessorPool {
     class Pool {
 
         private final DataFile file;
+        //缓存对一个文件的随机访问对象
         private final List<DataFileAccessor> pool = new ArrayList<DataFileAccessor>();
+        //一个文件当前被打开的数量
         private int openCounter;
         private boolean disposed;
 
@@ -51,6 +53,7 @@ public class DataFileAccessorPool {
             if (pool.isEmpty()) {
                 rc = new DataFileAccessor(journal, file);
             } else {
+                //没看到缓存的地方啊
                 rc = pool.remove(pool.size() - 1);
             }
             openCounter++;

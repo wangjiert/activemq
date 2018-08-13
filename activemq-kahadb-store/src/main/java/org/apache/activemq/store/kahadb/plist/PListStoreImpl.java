@@ -234,6 +234,7 @@ public class PListStoreImpl extends ServiceSupport implements BrokerServiceAware
         if (!isStarted()) {
             throw new IllegalStateException("Not started");
         }
+        //文件缓存的代码
         intialize();
         synchronized (indexLock) {
             synchronized (this) {
@@ -287,6 +288,7 @@ public class PListStoreImpl extends ServiceSupport implements BrokerServiceAware
     }
 
     protected synchronized void intialize() throws Exception {
+        //已经开始了就什么也不做了
         if (isStarted()) {
             if (this.initialized == false) {
                 if (this.directory == null) {

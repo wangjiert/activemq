@@ -44,6 +44,7 @@ final class DataFileAccessor {
      */
     public DataFileAccessor(Journal dataManager, DataFile dataFile) throws IOException {
         this.dataFile = dataFile;
+        //引用的是journey的集合
         this.inflightWrites = dataManager.getInflightWrites();
         this.file = dataFile.openRandomAccessFile();
     }

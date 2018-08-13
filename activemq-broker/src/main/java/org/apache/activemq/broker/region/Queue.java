@@ -110,6 +110,10 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
     protected final TaskRunnerFactory taskFactory;
     protected TaskRunner taskRunner;
     private final ReentrantReadWriteLock consumersLock = new ReentrantReadWriteLock();
+    //难道说一个地址可以有几个订阅者
+    //应该是多个jms地址对应一个broker内部的地址吧 然后每个jms地址对应一个订阅
+    //不对呀 明明每个消费者就是有一个broker内部地址与之对应的
+    //看来还是一个消费者可以同时消费几个地址
     protected final List<Subscription> consumers = new ArrayList<Subscription>(50);
     private final ReentrantReadWriteLock messagesLock = new ReentrantReadWriteLock();
     protected PendingMessageCursor messages;
@@ -124,6 +128,7 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
     private MessageGroupMapFactory messageGroupMapFactory = new CachedMessageGroupMapFactory();
     final Lock sendLock = new ReentrantLock();
     private ExecutorService executor;
+    //这里面放的是什么呢
     private final Map<MessageId, Runnable> messagesWaitingForSpace = new LinkedHashMap<MessageId, Runnable>();
     private boolean useConsumerPriority = true;
     private boolean strictOrderDispatch = false;
@@ -451,6 +456,7 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
         pagedInPendingDispatchLock.writeLock().lock();
         try {
 
+            //看上去很合理 地址里面记录订阅对象 订阅对象里面记录地址信息
             sub.add(context, this);
 
             // needs to be synchronized - so no contention with dispatching
@@ -461,6 +467,7 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
                 if (consumers.size() == 0) {
                     firstConsumer = true;
                     if (consumersBeforeDispatchStarts != 0) {
+                        //为什么减一呢 应该是第一个订阅进来的时候只是创建CountDown并不会减一  而之后的地址会不断的减一
                         consumersBeforeStartsLatch = new CountDownLatch(consumersBeforeDispatchStarts - 1);
                     }
                 } else {
@@ -470,6 +477,7 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
                 }
 
                 addToConsumerList(sub);
+                //判断是不是专有的消费者 如果是的化 其他消费者就收不到消息了
                 if (sub.getConsumerInfo().isExclusive() || isAllConsumersExclusiveByDefault()) {
                     Subscription exclusiveConsumer = dispatchSelector.getExclusiveConsumer();
                     if (exclusiveConsumer == null) {
@@ -1672,6 +1680,7 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
                         it.remove();
                         op.run();
                     } else {
+                        //注册内存使用不满时的回调
                         registerCallbackForNotFullNotification();
                         break;
                     }

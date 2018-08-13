@@ -73,6 +73,7 @@ public abstract class AbstractRegion implements Region {
     protected boolean autoCreateDestinations = true;
     protected final TaskRunnerFactory taskRunnerFactory;
     protected final ReentrantReadWriteLock destinationsLock = new ReentrantReadWriteLock();
+    //专门缓存锁
     protected final Map<ConsumerId, Object> consumerChangeMutexMap = new HashMap<ConsumerId, Object>();
     protected boolean started;
 
@@ -395,6 +396,8 @@ public abstract class AbstractRegion implements Region {
                     addList.add(dest);
                 }
                 // ensure sub visible to any new dest addSubscriptionsForDestination
+                //为什么先是加了这个消费者的  难道是因为其他消费者已经加了的原因
+                //如果其他消费者已经加了这个订阅  后来的消费者还会进入这里吗
                 subscriptions.put(info.getConsumerId(), sub);
             } finally {
                 destinationsLock.readLock().unlock();
@@ -403,6 +406,7 @@ public abstract class AbstractRegion implements Region {
             List<Destination> removeList = new ArrayList<Destination>();
             for (Destination dest : addList) {
                 try {
+                    //broker内部的地址
                     dest.addSubscription(context, sub);
                     removeList.add(dest);
                 } catch (SecurityException e){

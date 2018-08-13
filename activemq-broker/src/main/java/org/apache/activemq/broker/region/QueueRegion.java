@@ -58,6 +58,7 @@ public class QueueRegion extends AbstractRegion {
         if (info.isBrowser()) {
             QueueBrowserSubscription sub = new QueueBrowserSubscription(broker,usageManager, context, info);
             if (entry != null) {
+                //订阅的预取数量应该就是在这里配置的
                 entry.configure(broker, usageManager, sub);
             }
             return sub;

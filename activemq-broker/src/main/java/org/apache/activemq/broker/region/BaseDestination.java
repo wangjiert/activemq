@@ -246,6 +246,7 @@ public abstract class BaseDestination implements Destination {
 
     @Override
     public void addProducer(ConnectionContext context, ProducerInfo info) throws Exception {
+        //应该是找到了所有的broker内部地址 然后将这个地址中的生产者数量加1
         destinationStatistics.getProducers().increment();
         this.lastActiveTime=0l;
     }
@@ -257,11 +258,13 @@ public abstract class BaseDestination implements Destination {
 
     @Override
     //传进来两个参数又不用 不知道是为什么
+    //每一个jms地址都只对应一个这个对象 所以不同的消费者消费同一个地址时. 这个对象能够统计这些信息
     public void addSubscription(ConnectionContext context, Subscription sub) throws Exception{
         //增加用户的统计量 应该是一个地址一个统计对象吧
         //新加了一个地址 一般来说就是一个新用户进来了 而新用户的消费地址有恰好是之前就有的 所以这个地址上的消费者数量加一
         destinationStatistics.getConsumers().increment();
         //为什么新加了一个地址进来就把激活时间重置了呢
+        //是不是在统计新的消费者进入之后激活的时间
         this.lastActiveTime=0l;
     }
 

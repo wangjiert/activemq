@@ -62,6 +62,8 @@ public abstract class AbstractRegion implements Region {
     private static final Logger LOG = LoggerFactory.getLogger(AbstractRegion.class);
 
     protected final Map<ActiveMQDestination, Destination> destinations = new ConcurrentHashMap<ActiveMQDestination, Destination>();
+    //都在里面取数据没看到什么时候放进去的
+    //key应该是jms的地址 value应该是broker内部的地址
     protected final DestinationMap destinationMap = new DestinationMap();
     //拉消息的时候是直接在map里面拿,什么时候放进去的呢
     protected final Map<ConsumerId, Subscription> subscriptions = new ConcurrentHashMap<ConsumerId, Subscription>();
@@ -73,7 +75,11 @@ public abstract class AbstractRegion implements Region {
     protected boolean autoCreateDestinations = true;
     protected final TaskRunnerFactory taskRunnerFactory;
     protected final ReentrantReadWriteLock destinationsLock = new ReentrantReadWriteLock();
+<<<<<<< HEAD
     //专门缓存锁
+=======
+    //添加消费者的时候往这个集合里面加了东西 暂时没看到怎么用
+>>>>>>> 9b133a31670b415a447875152e55762870a20d39
     protected final Map<ConsumerId, Object> consumerChangeMutexMap = new HashMap<ConsumerId, Object>();
     protected boolean started;
 
@@ -147,6 +153,9 @@ public abstract class AbstractRegion implements Region {
 
         destinationsLock.writeLock().lock();
         try {
+            //这个对象一个broker只有一个 然后这个对象又缓存了地址;很明显这个集合缓存了全部的地址 那么肯定有重复的地址进来的
+            //这里又没有处理已经添加过的地址 还是说这里做的东西只需要做一次 订阅是在添加用户的时候添加的 同一个地址对应的不同用户
+            //应该是直接可以加进来的 所以导致了订阅里面有这个地址对应的订阅存在吗
             Destination dest = destinations.get(destination);
             if (dest == null) {
                 if (destination.isTemporary() == false || createIfTemporary) {
@@ -161,6 +170,7 @@ public abstract class AbstractRegion implements Region {
                     if (destinationInterceptor != null) {
                         dest = destinationInterceptor.intercept(dest);
                     }
+                    //里面做了不少事啊
                     dest.start();
                     addSubscriptionsForDestination(context, dest);
                     destinations.put(destination, dest);
@@ -240,6 +250,8 @@ public abstract class AbstractRegion implements Region {
         List<Subscription> rc = new ArrayList<Subscription>();
         // Add all consumers that are interested in the destination.
         //奇了怪了 到底是什么时候加进去的呢
+        //添加消费者的时候进去的
+        //看这里的逻辑应该是订阅在这之前就要添加进去  难道是在初始化的时候有过相应的处理吗
         for (Iterator<Subscription> iter = subscriptions.values().iterator(); iter.hasNext();) {
             Subscription sub = iter.next();
             //扫描所有的订阅者 找到订阅地址和添加的地址相同的订阅者
@@ -344,6 +356,7 @@ public abstract class AbstractRegion implements Region {
         ActiveMQDestination destination = info.getDestination();
         if (destination != null && !destination.isPattern() && !destination.isComposite()) {
             // lets auto-create the destination
+            //创建地址
             lookup(context, destination,true);
         }
 
@@ -356,6 +369,7 @@ public abstract class AbstractRegion implements Region {
             }
         }
         synchronized (addGuard) {
+            //一个消费者对应一个订阅 而这个集合是在broker内部的地址对象内部的 侧面说明一个消费者是可以消费几个地址的
             Subscription o = subscriptions.get(info.getConsumerId());
             if (o != null) {
                 LOG.warn("A duplicate subscription was detected. Clients may be misbehaving. Later warnings you may see about subscription removal are a consequence of this.");
@@ -376,8 +390,11 @@ public abstract class AbstractRegion implements Region {
             // inactive state for the
             // destination which has reduced memory usage.
             //
+            //这个有什么用  找到了之后就直接丢弃了
             DestinationFilter.parseFilter(info.getDestination());
 
+            //总算看到了在哪新建订阅了
+            //创建订阅加配置
             Subscription sub = createSubscription(context, info);
 
             // At this point we're done directly manipulating subscriptions,
@@ -398,12 +415,16 @@ public abstract class AbstractRegion implements Region {
                 // ensure sub visible to any new dest addSubscriptionsForDestination
                 //为什么先是加了这个消费者的  难道是因为其他消费者已经加了的原因
                 //如果其他消费者已经加了这个订阅  后来的消费者还会进入这里吗
+                //加进去是为了后来的添加可以看到这个订阅
+                //这应该是防止再次加入同一个消费者吧
                 subscriptions.put(info.getConsumerId(), sub);
             } finally {
                 destinationsLock.readLock().unlock();
             }
 
             List<Destination> removeList = new ArrayList<Destination>();
+            //如果说这里有多个地址应该是这个正在创建的消费者消费的地址是一个匹配多个具体地址的地址吧
+            //正常应该是只有一个地址会返回
             for (Destination dest : addList) {
                 try {
                     //broker内部的地址

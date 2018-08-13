@@ -231,11 +231,13 @@ public class DestinationMapNode implements DestinationNode {
 
     public void appendMatchingValues(Set<DestinationNode> answer, String[] paths, int startIndex, boolean deep) {
         DestinationNode node = this;
+        //如果找到了一个>, 并且deep为true时就把这个变量设为false
         boolean couldMatchAny = true;
         int size = paths.length;
         for (int i = startIndex; i < size && node != null; i++) {
             String path = paths[i];
             if (deep && path.equals(ANY_DESCENDENT)) {
+                //node永远是这个path对应的节点的上一个node
                 answer.addAll(node.getDesendentValues());
                 couldMatchAny = false;
                 break;

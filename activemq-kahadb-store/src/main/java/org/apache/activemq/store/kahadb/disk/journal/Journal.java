@@ -241,15 +241,24 @@ public class Journal {
     private DataFileRemovedListener dataFileRemovedListener;
 
     public synchronized void start() throws IOException {
+<<<<<<< HEAD
         //启动只做一次
+=======
+        //防止多次启动
+>>>>>>> 9b133a31670b415a447875152e55762870a20d39
         if (started) {
             return;
         }
 
+        //启动时间
         long start = System.currentTimeMillis();
         //需要看一下和appender有关系没
         accessorPool = new DataFileAccessorPool(this);
+<<<<<<< HEAD
         //这么早就设置为true
+=======
+        //这么快就设为true了吗 明明还没启动啊
+>>>>>>> 9b133a31670b415a447875152e55762870a20d39
         started = true;
 
         //用来写数据进入磁盘文件的对象

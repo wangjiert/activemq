@@ -28,6 +28,7 @@ import java.util.Map;
  *
  * @author chirino
  */
+//journal内部会保存这个池的实例化对象
 public class DataFileAccessorPool {
 
     private final Journal journal;

@@ -300,11 +300,16 @@ public class PListStoreImpl extends ServiceSupport implements BrokerServiceAware
                     IOHelper.mkdirs(this.indexDirectory);
                     IOHelper.deleteChildren(this.indexDirectory);
                 }
+                //就是拿到文件锁
                 lock();
+                //这里不就是做了跟存数据一样的逻辑吗
+                //journal存数据 pageFile存索引
+                //为什么要又搞一套这个玩意呢
                 this.journal = new Journal();
                 this.journal.setDirectory(directory);
                 this.journal.setMaxFileLength(getJournalMaxFileLength());
                 this.journal.setWriteBatchSize(getJournalMaxWriteBatchSize());
+                //还是看一下吧 通过这里把消息持久化过程再重新回顾一下
                 this.journal.start();
                 this.pageFile = new PageFile(getIndexDirectory(), "tmpDB");
                 this.pageFile.setEnablePageCaching(getIndexEnablePageCaching());
@@ -448,11 +453,14 @@ public class PListStoreImpl extends ServiceSupport implements BrokerServiceAware
 
     private void lock() throws IOException {
         if (lockFile == null) {
+            //这个文件里面记录了每次锁住的时间
             File lockFileName = new File(directory, "lock");
             lockFile = new LockFile(lockFileName, true);
             if (failIfDatabaseIsLocked) {
+                //决定是不是一旦文件被锁住就报错
                 lockFile.lock();
             } else {
+                //必须拿到锁 否则一直循环等待的获取锁
                 while (true) {
                     try {
                         lockFile.lock();

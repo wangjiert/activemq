@@ -333,6 +333,8 @@ public final class AdvisorySupport {
         return isAdvisoryTopic(ActiveMQMessageTransformation.transformDestination(destination));
     }
 
+    //应该是用于管理通知消息的topic
+    //判断条件很简单 首先地址是不是topic 然后判断地址的名字是不是以特定字符开头
     public static boolean isAdvisoryTopic(ActiveMQDestination destination) {
         if (destination != null) {
             if (destination.isComposite()) {

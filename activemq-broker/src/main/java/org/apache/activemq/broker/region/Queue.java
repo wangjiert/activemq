@@ -116,11 +116,15 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
     //看来还是一个消费者可以同时消费几个地址
     protected final List<Subscription> consumers = new ArrayList<Subscription>(50);
     private final ReentrantReadWriteLock messagesLock = new ReentrantReadWriteLock();
+    //这个才是取消息的地方
+    //StoreQueueCursor
+    //这个应该不做什么事吧  只是包含了几个变量会指向真正缓存数据的地方
     protected PendingMessageCursor messages;
     private final ReentrantReadWriteLock pagedInMessagesLock = new ReentrantReadWriteLock();
     private final PendingList pagedInMessages = new OrderedPendingList();
     // Messages that are paged in but have not yet been targeted at a subscription
     private final ReentrantReadWriteLock pagedInPendingDispatchLock = new ReentrantReadWriteLock();
+    //感觉这个是不是消息的缓存
     protected QueueDispatchPendingList dispatchPendingList = new QueueDispatchPendingList();
     private AtomicInteger pendingSends = new AtomicInteger(0);
     private MessageGroupMap messageGroupOwners;
@@ -446,6 +450,7 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
     @Override
     //给一个地址添加订阅者
     //这是从订阅者里面找到的对应地址的订阅 关键是最开始的订阅是从何而来呢
+    //这已经进入了一个与jms地址对应的broker内部
     public void addSubscription(ConnectionContext context, Subscription sub) throws Exception {
         LOG.debug("{} add sub: {}, dequeues: {}, dispatched: {}, inflight: {}", new Object[]{ getActiveMQDestination().getQualifiedName(), sub, getDestinationStatistics().getDequeues().getCount(), getDestinationStatistics().getDispatched().getCount(), getDestinationStatistics().getInflight().getCount() });
 
@@ -457,6 +462,7 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
         try {
 
             //看上去很合理 地址里面记录订阅对象 订阅对象里面记录地址信息
+            //订阅是基于每个消费者的
             sub.add(context, this);
 
             // needs to be synchronized - so no contention with dispatching
@@ -464,6 +470,7 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
             consumersLock.writeLock().lock();
             try {
                 // set a flag if this is a first consumer
+                //每次有新的消费者加进来就会吧订阅缓存起来
                 if (consumers.size() == 0) {
                     firstConsumer = true;
                     if (consumersBeforeDispatchStarts != 0) {
@@ -476,6 +483,7 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
                     }
                 }
 
+                //加到集合里面
                 addToConsumerList(sub);
                 //判断是不是专有的消费者 如果是的化 其他消费者就收不到消息了
                 if (sub.getConsumerInfo().isExclusive() || isAllConsumersExclusiveByDefault()) {
@@ -1660,9 +1668,11 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
      * @return true if we would like to iterate again
      * @see org.apache.activemq.thread.Task#iterate()
      */
+    //很重要啊
     @Override
     public boolean iterate() {
         MDC.put("activemq.destination", getName());
+        //表示是否需要读取更多的消息到内存中
         boolean pageInMoreMessages = false;
         synchronized (iteratingMutex) {
 
@@ -1672,6 +1682,7 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
             iterationRunning = true;
 
             // do early to allow dispatch of these waiting messages
+            //暂时还没发现有什么用 找到添加runnable的地方 看看run方法就可以了
             synchronized (messagesWaitingForSpace) {
                 Iterator<Runnable> it = messagesWaitingForSpace.values().iterator();
                 while (it.hasNext()) {
@@ -2059,8 +2070,10 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
                     });
         }
 
+        //是否有消费者是通过订阅者总数减去浏览者
         if (toPageIn > 0 && (force || (haveRealConsumer() && pagedInPendingSize < maxPageSize))) {
             int count = 0;
+            //需要取这么多消息出来
             result = new ArrayList<QueueMessageReference>(toPageIn);
             messagesLock.writeLock().lock();
             try {

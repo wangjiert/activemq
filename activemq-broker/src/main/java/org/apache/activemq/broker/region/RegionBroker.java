@@ -327,6 +327,7 @@ public class RegionBroker extends EmptyBroker {
 
         //如果已经添加过了 就直接返回了
         //既然不会有重复的地址进来 那么订阅怎么会扫描到和这个地址相同的订阅呢
+        //这个缓存也是broker中的缓存呀 难道每个连接都有自己的broker对象吗
         //难道是jms的地址和broker内的地址是多对一的关系吗
         answer = destinations.get(destination);
         if (answer != null) {
@@ -364,6 +365,8 @@ public class RegionBroker extends EmptyBroker {
             if (destination.isTemporary()) {
                 create = createIfTemp;
             }
+            //以queue region为例
+            //等同于一个单例  地址在这里仅仅是提供了一个类型 并不是说每一个地址都去创建一个broker内部的地址
             answer = getRegion(destination).addDestination(context, destination, create);
             destinations.put(destination, answer);
         } finally {
@@ -414,6 +417,8 @@ public class RegionBroker extends EmptyBroker {
             try {
                 // This seems to cause the destination to be added but without
                 // advisories firing...
+                //已经在一个broker里面了 为什么还在通过连接上下文取broker 看来broker对象是不唯一的
+                //搞笑的吧 添加地址的时候已经调过这个方法了 现在添加消费者又来一次 是几个意思呢
                 context.getBroker().addDestination(context, destination, isAllowTempAutoCreationOnSend());
                 getRegion(destination).addProducer(context, info);
             } finally {
@@ -443,6 +448,7 @@ public class RegionBroker extends EmptyBroker {
         }
         inactiveDestinationsPurgeLock.readLock().lock();
         try {
+            //之前添加地址的时候已经加入了jms地址月broker内部地址的一一对应
             return getRegion(destination).addConsumer(context, info);
         } finally {
             inactiveDestinationsPurgeLock.readLock().unlock();

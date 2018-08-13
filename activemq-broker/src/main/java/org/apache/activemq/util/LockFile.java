@@ -33,14 +33,18 @@ import java.util.Date;
  */
 public class LockFile {
 
+    //为什么选择用这个属性来控制是否支持文件锁
     private static final boolean DISABLE_FILE_LOCK = Boolean.getBoolean("java.nio.channels.FileLock.broken");
     final private File file;
+    //记录锁文件最后修改的时间
     private long lastModified;
 
     private FileLock lock;
     private RandomAccessFile randomAccessLockFile;
+    //被锁了几次
     private int lockCounter;
     private final boolean deleteOnUnlock;
+    //表示文件是否被锁住
     private volatile boolean locked;
     private String lockSystemPropertyName = "";
 
@@ -55,17 +59,24 @@ public class LockFile {
      * @throws IOException
      */
     synchronized public void lock() throws IOException {
+        //如果不允许文件锁就直接返回
         if (DISABLE_FILE_LOCK) {
             return;
         }
 
+        //这个表示的是文件被锁的次数吗
         if (lockCounter > 0) {
             return;
         }
 
+        //创建上一级目录
         IOHelper.mkdirs(file.getParentFile());
         synchronized (LockFile.class) {
+            //只是为了创建一个key吧
             lockSystemPropertyName = getVmLockKey();
+            //值是时间
+            //是通过这里实现的加锁吗 如果已经有锁了就直接报错
+            //看来这个只是防止同一时间多次创建文件锁
             if (System.getProperty(lockSystemPropertyName) != null) {
                 throw new IOException("File '" + file + "' could not be locked as lock is already held for this jvm. Value: " + System.getProperty(lockSystemPropertyName));
             }
@@ -76,21 +87,28 @@ public class LockFile {
                 randomAccessLockFile = new RandomAccessFile(file, "rw");
                 IOException reason = null;
                 try {
+                    //如果说这个锁是被虚拟机持有的 那么这个锁有用吗
+                    //锁被虚拟机持有是什么意思呢 这个对象可以跨线程的被访问的意思吗 如果已经锁住了再调用一次是什么效果
+                    //我感觉是对一个虚拟机而言 这个锁获得了就是所有线程都获得了  其他虚拟机或者语言的代码不能在获得
                     lock = randomAccessLockFile.getChannel().tryLock(0, Math.max(1, randomAccessLockFile.getChannel().size()), false);
                 } catch (OverlappingFileLockException e) {
                     reason = IOExceptionSupport.create("File '" + file + "' could not be locked.", e);
                 } catch (IOException ioe) {
                     reason = ioe;
                 }
+                //这里逻辑有点厉害啊 报错之后什么都没干啊 只是记录了原因 如果这个虚拟机之前就获得了锁那么 这个错误直接被忽略了
+                //表示拿到了锁
                 if (lock != null) {
                     //track lastModified only if we are able to successfully obtain the lock.
                     randomAccessLockFile.writeLong(System.currentTimeMillis());
                     randomAccessLockFile.getChannel().force(true);
                     lastModified = file.lastModified();
                     lockCounter++;
+                    //开始的时候就写入了时间值 现在又来一次 这个值有什么用
+                    //之前设置值的时候进行了同步锁 现在有不进行同步锁 为什么
                     System.setProperty(lockSystemPropertyName, new Date().toString());
                     locked = true;
-                } else {
+                } else { //已经被别人锁了
                     // new read file for next attempt
                     closeReadFile();
                     if (reason != null) {
@@ -102,6 +120,9 @@ public class LockFile {
             }
         } finally {
             synchronized (LockFile.class) {
+                //只要拿到了锁就不会情况这个东西
+                //这里要测试一下重复拿锁是个什么情况 我感觉还是会返回锁对象 还是同一个对象
+                //验证结果: 就算同一个虚拟机两次去获取文件锁也会报错
                 if (lock == null) {
                     System.getProperties().remove(lockSystemPropertyName);
                 }

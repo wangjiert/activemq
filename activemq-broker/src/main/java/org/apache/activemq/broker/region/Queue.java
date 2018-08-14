@@ -119,6 +119,7 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
     //这个才是取消息的地方
     //StoreQueueCursor
     //这个应该不做什么事吧  只是包含了几个变量会指向真正缓存数据的地方
+    //数据是什么时候从主存进入这个里面的
     protected PendingMessageCursor messages;
     private final ReentrantReadWriteLock pagedInMessagesLock = new ReentrantReadWriteLock();
     private final PendingList pagedInMessages = new OrderedPendingList();
@@ -2130,6 +2131,7 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
                                     LOG.debug("Duplicate message {} from cursor, removing from store", this, ref.getMessage());
                                     store.removeMessage(connectionContext, new MessageAck(ref.getMessage(), MessageAck.POSION_ACK_TYPE, 1));
                                 }
+                                //应该是直接写到dlq吧
                                 broker.getRoot().sendToDeadLetterQueue(connectionContext, ref.getMessage(), null, new Throwable("duplicate paged in from cursor for " + destination));
                             }
                         }

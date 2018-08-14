@@ -31,6 +31,7 @@ public class RecoverableRandomAccessFile implements java.io.DataOutput, java.io.
     RandomAccessFile raf;
     File file;
     String mode;
+    //创建时的时候会指定
     final boolean isSkipMetadataUpdate;
 
     public RecoverableRandomAccessFile(File file, String mode, boolean skipMetadataUpdate) throws FileNotFoundException {

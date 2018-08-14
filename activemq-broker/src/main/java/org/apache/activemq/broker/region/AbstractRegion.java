@@ -75,11 +75,8 @@ public abstract class AbstractRegion implements Region {
     protected boolean autoCreateDestinations = true;
     protected final TaskRunnerFactory taskRunnerFactory;
     protected final ReentrantReadWriteLock destinationsLock = new ReentrantReadWriteLock();
-<<<<<<< HEAD
     //专门缓存锁
-=======
     //添加消费者的时候往这个集合里面加了东西 暂时没看到怎么用
->>>>>>> 9b133a31670b415a447875152e55762870a20d39
     protected final Map<ConsumerId, Object> consumerChangeMutexMap = new HashMap<ConsumerId, Object>();
     protected boolean started;
 

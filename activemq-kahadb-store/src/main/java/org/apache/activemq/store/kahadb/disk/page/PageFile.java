@@ -75,6 +75,7 @@ public class PageFile {
     public static final int DEFAULT_PAGE_CACHE_SIZE = Integer.getInteger("defaultPageCacheSize", 100);;
 
     private static final int RECOVERY_FILE_HEADER_SIZE = 1024 * 4;
+    //这个头是不是有点大啊 相当于一个头部信息有2k
     private static final int PAGE_FILE_HEADER_SIZE = 1024 * 4;
 
     // Recovery header is (long offset)
@@ -83,6 +84,7 @@ public class PageFile {
     // A PageFile will use a couple of files in this directory
     private final File directory;
     // And the file names in that directory will be based on this name.
+    //文件的名字
     private final String name;
 
     // File handle used for reading pages..
@@ -90,6 +92,8 @@ public class PageFile {
     // File handle used for writing pages..
     private RecoverableRandomAccessFile writeFile;
     // File handle used for writing pages..
+    //看起来好像之后缓存最后一次的批处理数据
+    //里面记录的key是pageId
     private RecoverableRandomAccessFile recoveryFile;
 
     // The size of pages
@@ -101,6 +105,7 @@ public class PageFile {
     // to this max size as soon as  possible.
     private int recoveryFileMaxPageCount = 10000;
     // The number of pages in the current recovery buffer
+    //记录这个干什么
     private int recoveryPageCount;
 
     private final AtomicBoolean loaded = new AtomicBoolean();
@@ -124,6 +129,7 @@ public class PageFile {
     private boolean enabledWriteThread = false;
 
     // These are used if enableAsyncWrites==true
+    //表示是否需要停掉异步写的线程
     private final AtomicBoolean stopWriter = new AtomicBoolean();
     private Thread writerThread;
     private CountDownLatch checkpointLatch;
@@ -132,14 +138,18 @@ public class PageFile {
     private final TreeMap<Long, PageWrite> writes = new TreeMap<Long, PageWrite>();
 
     // Keeps track of free pages.
+    //下一个空闲的pageid 但是计算的时候没有管里面的文件里面的空闲page啊
     private final AtomicLong nextFreePageId = new AtomicLong();
     private SequenceSet freeList = new SequenceSet();
 
+    //居然从元数据里面读
+    //看来元数据存储的时候默认算一次事务
     private final AtomicLong nextTxid = new AtomicLong();
 
     // Persistent settings stored in the page file.
     private MetaData metaData;
 
+    //这个又是在哪里加的数据呢
     private final ArrayList<File> tmpFilesForRemoval = new ArrayList<File>();
 
     private boolean useLFRUEviction = false;
@@ -152,6 +162,7 @@ public class PageFile {
         Page page;
         byte[] current;
         byte[] diskBound;
+        //这两个东西有用吗 没看到啊 除了判断的时候
         long currentLocation = -1;
         long diskBoundLocation = -1;
         File tmpFile;
@@ -207,8 +218,9 @@ public class PageFile {
 
         void begin() {
             if (currentLocation != -1) {
+                //这个是开始写数据了  那么你换个location有什么用
                 diskBoundLocation = currentLocation;
-            } else {
+            } else {//这个是还没开始写吧
                 diskBound = current;
             }
             current = null;
@@ -234,13 +246,22 @@ public class PageFile {
      */
     public static class MetaData {
 
+        //存的是class的名字
         String fileType;
+        //现在还是第一版
         String fileTypeVersion;
 
+        //应该记录的是事务的id吧
+        //保存的时候这个值有加1
         long metaDataTxId = -1;
         int pageSize;
+        //看名字应该是关闭的时候清空
+        //应该是关闭的时候会做一些清理工作
+        //启动的时候会设为false 是表示还没做清理工作吧
         boolean cleanShutdown;
+        //应该存的是上一个事务id
         long lastTxId;
+        //没有使用的page数量 难道是想复用
         long freePages;
 
         public String getFileType() {
@@ -370,20 +391,24 @@ public class PageFile {
 
             if (enablePageCaching) {
                 if (isUseLFRUEviction()) {
+                    //根据使用次数弹出的缓存
                     pageCache = Collections.synchronizedMap(new LFUCache<Long, Page>(pageCacheSize, getLFUEvictionFactor()));
                 } else {
+                    //根据最后访问时间弹出的缓存
                     pageCache = Collections.synchronizedMap(new LRUCache<Long, Page>(pageCacheSize, pageCacheSize, 0.75f, true));
                 }
             }
 
+            //按照这个感觉应该是一个目录下可以配置多个index文件 但是pagefile好像只有一个
             File file = getMainPageFile();
             IOHelper.mkdirs(file.getParentFile());
             writeFile = new RecoverableRandomAccessFile(file, "rw", false);
             readFile = new RecoverableRandomAccessFile(file, "r");
 
-            if (readFile.length() > 0) {
+            if (readFile.length() > 0) {//文件有数据就从里面读取元数据
                 // Load the page size setting cause that can't change once the file is created.
                 loadMetaData();
+                //还能被覆盖的吗
                 pageSize = metaData.getPageSize();
             } else {
                 // Store the page size setting cause that can't change once the file is created.
@@ -406,11 +431,14 @@ public class PageFile {
             if (metaData.isCleanShutdown()) {
                 nextTxid.set(metaData.getLastTxId() + 1);
                 if (metaData.getFreePages() > 0) {
+                    //这读的时候也没看是不是个这个值相等啊
                     loadFreeList();
                 }
             } else {
                 LOG.debug(toString() + ", Recovering page file...");
+                //做恢复工作时顺便找到下一个事务的id
                 nextTxid.set(redoRecoveryUpdates());
+                //因为还没做过这个操作
                 needsFreePageRecovery = true;
             }
 
@@ -419,6 +447,7 @@ public class PageFile {
             }
             nextFreePageId.set((writeFile.length() - PAGE_FILE_HEADER_SIZE) / pageSize);
 
+            //这么简单粗暴吗  直接扫面了整个index找到类型为空闲的page
             if (needsFreePageRecovery) {
                 // Scan all to find the free pages after nextFreePageId is set
                 freeList = new SequenceSet();
@@ -588,10 +617,12 @@ public class PageFile {
             v2 = null;
         }
 
+        //允许一个出错啊
         if (v1 == null && v2 == null) {
             throw new IOException("Could not load page file meta data");
         }
 
+        //感觉很简单粗暴啊
         if (v1 == null || v1.metaDataTxId < 0) {
             metaData = v2;
         } else if (v2 == null || v1.metaDataTxId < 0) {
@@ -623,6 +654,7 @@ public class PageFile {
         byte[] d = os.toByteArray();
 
         // So we don't loose it.. write it 2 times...
+        //同一份数据写两次 读的时候还会不用也是奇怪
         writeFile.seek(0);
         writeFile.write(d);
         writeFile.sync();
@@ -1031,6 +1063,7 @@ public class PageFile {
         }
     }
 
+    //有数据了 开始写
     private void writeBatch() throws IOException {
 
         CountDownLatch checkpointLatch;
@@ -1062,6 +1095,7 @@ public class PageFile {
             if (enableRecoveryFile) {
                 Checksum checksum = new Adler32();
 
+                //这不就是每次新的一批数据会覆盖旧的一批吗
                 recoveryFile.seek(RECOVERY_FILE_HEADER_SIZE);
 
                 for (PageWrite w : batch) {
@@ -1140,6 +1174,7 @@ public class PageFile {
     }
 
     private long recoveryFileSizeForPages(int pageCount) {
+        //8字节用来干什么
         return RECOVERY_FILE_HEADER_SIZE + ((pageSize + 8) * pageCount);
     }
 
@@ -1173,6 +1208,7 @@ public class PageFile {
 
         // How many recovery pages do we have in the recovery buffer?
         recoveryFile.seek(0);
+        //那么长的头就记录了这三个信息
         long nextTxId = recoveryFile.readLong();
         long expectedChecksum = recoveryFile.readLong();
         int pageCounter = recoveryFile.readInt();
@@ -1182,10 +1218,13 @@ public class PageFile {
         LinkedHashMap<Long, byte[]> batch = new LinkedHashMap<Long, byte[]>();
         try {
             for (int i = 0; i < pageCounter; i++) {
+                //这个偏移量是哪个文件的
+                //记录的就是datafile的偏移量
                 long offset = recoveryFile.readLong();
                 byte[] data = new byte[pageSize];
                 if (recoveryFile.read(data, 0, pageSize) != pageSize) {
                     // Invalid recovery record, Could not fully read the data". Probably due to a partial write to the recovery buffer
+                    //恢复不了也没做什么
                     return nextTxId;
                 }
                 checksum.update(data, 0, pageSize);
@@ -1216,8 +1255,10 @@ public class PageFile {
         return nextTxId;
     }
 
+    //开始异步写数据 里面放的key是数据在datafile的偏移量 值是数据本身
     private void startWriter() {
         synchronized (writes) {
+            //如果不允许异步写数据就什么都没做
             if (enabledWriteThread) {
                 stopWriter.set(false);
                 writerThread = new Thread("KahaDB Page Writer") {

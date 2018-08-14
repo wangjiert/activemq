@@ -321,9 +321,11 @@ public class PListStoreImpl extends ServiceSupport implements BrokerServiceAware
                 this.pageFile.tx().execute(new Transaction.Closure<IOException>() {
                     @Override
                     public void execute(Transaction tx) throws IOException {
+                        //说明还没数据
                         if (pageFile.getPageCount() == 0) {
                             Page<MetaData> page = tx.allocate();
                             assert page.getPageId() == 0;
+                            //page0存的是元数据
                             page.set(metaData);
                             metaData.page = page;
                             metaData.createIndexes(tx);

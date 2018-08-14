@@ -76,10 +76,13 @@ public class Journal {
     public static final byte[] BATCH_CONTROL_RECORD_MAGIC = bytes("WRITE BATCH");
     //4+1表示
     public static final int BATCH_CONTROL_RECORD_SIZE = RECORD_HEAD_SPACE + BATCH_CONTROL_RECORD_MAGIC.length + 4 + 8;
+    //先写四个字节表示头的长度 1字节表示记录类型 然后一个魔数的字符串
+    //头的长度是4个字节表示自身长度 一个字节表示类型 魔数的长度 四个字节表示数据长度 8字节表示校验数据
     public static final byte[] BATCH_CONTROL_RECORD_HEADER = createBatchControlRecordHeader();
     public static final byte[] EMPTY_BATCH_CONTROL_RECORD = createEmptyBatchControlRecordHeader();
     public static final int EOF_INT = ByteBuffer.wrap(new byte[]{'-', 'q', 'M', 'a'}).getInt();
     public static final byte EOF_EOT = '4';
+    //就是四个字节加一个字节的数据
     public static final byte[] EOF_RECORD = createEofBatchAndLocationRecord();
 
     private ScheduledExecutorService scheduler;
@@ -214,12 +217,14 @@ public class Journal {
     protected Map<File, DataFile> fileByFileMap = new LinkedHashMap<File, DataFile>();
     protected LinkedNodeList<DataFile> dataFiles = new LinkedNodeList<DataFile>();
 
+    //最后一次的location
     protected final AtomicReference<Location> lastAppendLocation = new AtomicReference<Location>();
     protected ScheduledFuture cleanupTask;
     protected AtomicLong totalLength = new AtomicLong();
     protected boolean archiveDataLogs;
     private ReplicationTarget replicationTarget;
     protected boolean checksum;
+    //启动的时候检查数据文件的非法数据
     protected boolean checkForCorruptionOnStartup;
     protected boolean enableAsyncDiskSync = true;
     private int nextDataFileId = 1;
@@ -229,6 +234,7 @@ public class Journal {
 
     protected PreallocationScope preallocationScope = PreallocationScope.ENTIRE_JOURNAL;
     protected PreallocationStrategy preallocationStrategy = PreallocationStrategy.SPARSE_FILE;
+    //会被用吗
     private File osKernelCopyTemplateFile = null;
     private ByteBuffer preAllocateDirectBuffer = null;
 
@@ -241,11 +247,7 @@ public class Journal {
     private DataFileRemovedListener dataFileRemovedListener;
 
     public synchronized void start() throws IOException {
-<<<<<<< HEAD
-        //启动只做一次
-=======
         //防止多次启动
->>>>>>> 9b133a31670b415a447875152e55762870a20d39
         if (started) {
             return;
         }
@@ -253,12 +255,9 @@ public class Journal {
         //启动时间
         long start = System.currentTimeMillis();
         //需要看一下和appender有关系没
+        //这个东西是不是只会读文件不写呢 但是明明是随机访问文件的一个对象
         accessorPool = new DataFileAccessorPool(this);
-<<<<<<< HEAD
-        //这么早就设置为true
-=======
         //这么快就设为true了吗 明明还没启动啊
->>>>>>> 9b133a31670b415a447875152e55762870a20d39
         started = true;
 
         //用来写数据进入磁盘文件的对象
@@ -280,7 +279,7 @@ public class Journal {
                     int num = Integer.parseInt(numStr);
                     //数字很重要 需要看一下什么时候会删除里面没有数据的文件
                     DataFile dataFile = new DataFile(file, num);
-                    //这个里面存的有点多啊
+                    //这个里面存的有点多啊 空文件也进去了 没看到删除的地方
                     fileMap.put(dataFile.getDataFileId(), dataFile);
                     totalLength.addAndGet(dataFile.getLength());
                 } catch (NumberFormatException e) {
@@ -301,19 +300,23 @@ public class Journal {
                     LOG.info("ignoring zero length, partially initialised journal data file: " + df);
                     continue;
                 } else if (l.getLast().equals(df) && isUnusedPreallocated(df)) {
+                    //如果最后一个文件是预申请的 还没用也不处理
                     continue;
                 }
                 dataFiles.addLast(df);
                 fileByFileMap.put(df.getFile(), df);
 
                 if( isCheckForCorruptionOnStartup() ) {
+                    //返回的location应该只有偏移量有用吧 记录的是文件校验合法的偏移量的后一位
                     lastAppendLocation.set(recoveryCheck(df));
                 }
             }
         }
 
+        //感觉没啥用
         if (preallocationScope != PreallocationScope.NONE) {
             switch (preallocationStrategy) {
+                //这应该是文件的
                 case SPARSE_FILE:
                     break;
                 case OS_KERNEL_COPY: {
@@ -349,13 +352,16 @@ public class Journal {
             nextDataFileId = currentDataFile.get().dataFileId + 1;
         }
 
+        //对每个文件进行校验是可配置的 所以不校验或则逻辑没走到的的时候这个可能为空
         if( lastAppendLocation.get()==null ) {
             DataFile df = dataFiles.getTail();
+            //为啥只校验最后一个文件呢
             lastAppendLocation.set(recoveryCheck(df));
         }
 
         // ensure we don't report unused space of last journal file in size metric
         int lastFileLength = dataFiles.getTail().getLength();
+        //这是不是有问题啊 location记录的不一定是最后一个文件的偏移量啊
         if (totalLength.get() > lastFileLength && lastAppendLocation.get().getOffset() > 0) {
             totalLength.addAndGet(lastAppendLocation.get().getOffset() - lastFileLength);
         }
@@ -363,6 +369,7 @@ public class Journal {
         cleanupTask = scheduler.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
+                //只是清楚pools里面打开的随机访问对象
                 cleanup();
             }
         }, DEFAULT_CLEANUP_INTERVAL, DEFAULT_CLEANUP_INTERVAL, TimeUnit.MILLISECONDS);
@@ -493,6 +500,7 @@ public class Journal {
     public boolean isUnusedPreallocated(DataFile dataFile) throws IOException {
         //好像是一个创建一个新的数据文件时 会提前初始化下一个数据文件
         if (preallocationScope == PreallocationScope.ENTIRE_JOURNAL_ASYNC) {
+            //从缓存里面拿 或则新建
             DataFileAccessor reader = accessorPool.openDataFileAccessor(dataFile);
             try {
                 byte[] firstFewBytes = new byte[BATCH_CONTROL_RECORD_HEADER.length];
@@ -514,26 +522,41 @@ public class Journal {
 
         DataFileAccessor reader = accessorPool.openDataFileAccessor(dataFile);
         try {
+            //随机读写的时候 如果在文件中间加数据 后面的数据是怎么移动的呢
             RandomAccessFile randomAccessFile = reader.getRaf().getRaf();
             randomAccessFile.seek(0);
             final long totalFileLength = randomAccessFile.length();
+            //应该读的不是刚好一个批处理
             byte[] data = new byte[getWriteBatchSize()];
             ByteSequence bs = new ByteSequence(data, 0, randomAccessFile.read(data));
 
+            //通过这个循环校验所有的批处理吗
             while (true) {
+                //返回值大于等于0是对的否则发送了错误
                 int size = checkBatchRecord(bs, randomAccessFile);
+                //这是搞笑吗 文件里面读的数据的长度会超过文件自身的长度吗
+                //到时可能 如果里面有EOF的话会导致条件判断的这种情况
+                //EOF的问题很大啊  会出现中文件中间吗 或者是什么时候加进去的 预初始化的时候到时在最开始写过 会删掉吗
                 if (size >= 0 && location.getOffset() + BATCH_CONTROL_RECORD_SIZE + size <= totalFileLength) {
+                    //找到一个EOF 就直接结束了 感觉这个EOF肯定不会是最后一个记录 不然不满足条件的后面
                     if (size == 0) {
                         // eof batch record
                         break;
                     }
+                    //来来偏移量记录了完整数据的位置
                     location.setOffset(location.getOffset() + BATCH_CONTROL_RECORD_SIZE + size);
                 } else {
 
+                    //错误数据是有记录的
+                    //如果最后一条记录是EOF会做什么处理呢 这里什么都没管
                     // Perhaps it's just some corruption... scan through the
                     // file to find the next valid batch record. We
                     // may have subsequent valid batch records.
+                    //找到下一个批数据的头开始的位置
+                    //找的过程中 找到头数据的时候并没有改变bs的偏移量啊
+                    //很明显这个方法需要移动头数据到bs的开始位置
                     if (findNextBatchRecord(bs, randomAccessFile) >= 0) {
+                        //文件偏移量减去批数据头信息开始之后的数据长度得出错误数据结束的地方
                         int nextOffset = Math.toIntExact(randomAccessFile.getFilePointer() - bs.remaining());
                         Sequence sequence = new Sequence(location.getOffset(), nextOffset - 1);
                         LOG.warn("Corrupt journal records found in '{}' between offsets: {}", dataFile.getFile(), sequence);
@@ -551,18 +574,27 @@ public class Journal {
         }
 
         int existingLen = dataFile.getLength();
+        //在这里会直接截断数据文件的长度
+        //location的偏移量表示 偏移量之前的数据都是校验过的 即使是错误的数据也会被记录
+        //这里也会删掉EOF
         dataFile.setLength(location.getOffset());
         if (existingLen > dataFile.getLength()) {
+            //总长度也会减少
             totalLength.addAndGet(dataFile.getLength() - existingLen);
         }
 
+        //如果几个block连着也没关系 sequenset会自动连起来
         if (!dataFile.corruptedBlocks.isEmpty()) {
             // Is the end of the data file corrupted?
             if (dataFile.corruptedBlocks.getTail().getLast() + 1 == location.getOffset()) {
+                //在这里改变了文件大小但是没改变总大小啊
+                //写数据的时候难道不是根据这个判断从哪开始写吗
+                //应该不是从底层文件的偏移量来的吧 之前所有的处理并没有改变文件的偏移量啊
                 dataFile.setLength((int) dataFile.corruptedBlocks.removeLastSequence().getFirst());
             }
         }
 
+        //这个东西也没管上一个处理中是否处理了
         return location;
     }
 
@@ -571,15 +603,18 @@ public class Journal {
         int pos = 0;
         while (true) {
             pos = bs.indexOf(header, 0);
-            if (pos >= 0) {
+            if (pos >= 0) {//找到了头
+                //这里处理了bs以批数据头开始
                 bs.setOffset(bs.offset + pos);
                 return pos;
             } else {
                 // need to load the next data chunck in..
-                if (bs.length != bs.data.length) {
+                if (bs.length != bs.data.length) {//文件读完了
                     // If we had a short read then we were at EOF
                     return -1;
                 }
+                //每次保留头数据的长度是为了防止头部信被截断
+                //我觉得保留头部数据减一会不会更好
                 bs.setOffset(bs.length - BATCH_CONTROL_RECORD_HEADER.length);
                 bs.reset();
                 bs.setLength(bs.length + reader.read(bs.data, bs.length, bs.data.length - BATCH_CONTROL_RECORD_HEADER.length));
@@ -587,26 +622,40 @@ public class Journal {
         }
     }
 
+    //如果说文件里面没有记录数据只有一个初始化的终止记录返回0
+    //如果说里面的数据的头信息不满足批处理的头返回-1
+    //如果数据过短或过长返回-2
+    //数据超过了文件长度返回-3
+    //数据校验出错返回-4
+    //正常情况下返回数据的长度
     private int checkBatchRecord(ByteSequence bs, RandomAccessFile reader) throws IOException {
+        //只取五个字节是因为终止记录是五字节吗
         ensureAvailable(bs, reader, EOF_RECORD.length);
         if (bs.startsWith(EOF_RECORD)) {
             return 0; // eof
         }
+        //确保有批处理头加上12字节那么长的数据
         ensureAvailable(bs, reader, BATCH_CONTROL_RECORD_SIZE);
         try (DataByteArrayInputStream controlIs = new DataByteArrayInputStream(bs)) {
 
             // Assert that it's a batch record.
+            //对于一个批处理这是固定的值
             for (int i = 0; i < BATCH_CONTROL_RECORD_HEADER.length; i++) {
                 if (controlIs.readByte() != BATCH_CONTROL_RECORD_HEADER[i]) {
                     return -1;
                 }
             }
 
+            //继续读取四字节的数据长度
+            //需要看一下数据长度是否包含了头部的数据
+            //
             int size = controlIs.readInt();
             if (size < 0 || size > Integer.MAX_VALUE - (BATCH_CONTROL_RECORD_SIZE + EOF_RECORD.length)) {
                 return -2;
             }
 
+            //数据校验
+            //需要设置校验flag并且校验数据存在才会进行校验
             long expectedChecksum = controlIs.readLong();
             Checksum checksum = null;
             if (isChecksum() && expectedChecksum > 0) {
@@ -614,16 +663,21 @@ public class Journal {
             }
 
             // revert to bs to consume data
+            //跳过批处理头的长度加上12字节
             bs.setOffset(controlIs.position());
+            //这是否说明数据的长度表示的就是数据本身的长度 不包含头尾的数据
             int toRead = size;
+            //前面只是保证了头信息长度加上12字节的数据存在 数据是否全在并不保证所有要循环读
+            //整个循环就是校验一下数据已经已经数据的长度是否正确
             while (toRead > 0) {
-                if (bs.remaining() >= toRead) {
+                if (bs.remaining() >= toRead) {//数据刚好够
                     if (checksum != null) {
                         checksum.update(bs.getData(), bs.getOffset(), toRead);
                     }
                     bs.setOffset(bs.offset + toRead);
                     toRead = 0;
                 } else {
+                    //每次读取数据的时候都会填满bs 这两个长度不相等说明已经读到了文件尾部
                     if (bs.length != bs.data.length) {
                         // buffer exhausted
                         return  -3;
@@ -666,6 +720,7 @@ public class Journal {
         return totalLength.get();
     }
 
+    //创建新的datafile
     private void rotateWriteFile() throws IOException {
        synchronized (dataFileIdLock) {
             DataFile dataFile = nextDataFile;
@@ -681,6 +736,8 @@ public class Journal {
             nextDataFile = null;
         }
         if (PreallocationScope.ENTIRE_JOURNAL_ASYNC == preallocationScope) {
+            //提前初始化下一个文件
+            //返回的东西会用吗
             preAllocateNextDataFileFuture = scheduler.submit(preAllocateNextDataFileTask);
         }
     }
@@ -700,12 +757,18 @@ public class Journal {
         }
     };
 
+    //看看谁用了
     private volatile Future preAllocateNextDataFileFuture;
 
+    //都是直接用记录下一个文件id的变量
     private DataFile newDataFile() throws IOException {
         int nextNum = nextDataFileId++;
         File file = getFile(nextNum);
         DataFile nextWriteFile = new DataFile(file, nextNum);
+        //创建一个随机访问对象
+        //初始化策略在这里用到了
+        //就是在文件开头和文件结尾写入EOF
+        //是不是只要这里写了EOF其他地方都没有
         preallocateEntireJournalDataFile(nextWriteFile.appendRandomAccessFile());
         return nextWriteFile;
     }

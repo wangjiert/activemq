@@ -402,6 +402,7 @@ public class Transaction implements Iterable<Page> {
         }
 
         // It might be a page this transaction has modified...
+        //首先找事务中正在处理的page
         PageWrite update = writes.get(pageId);
         if (update != null) {
             page.copy(update.getPage());
@@ -409,6 +410,8 @@ public class Transaction implements Iterable<Page> {
         }
 
         // We may be able to get it from the cache...
+        //然后从pagefile的缓存里面找
+        //但是有些缓存为什么两边都会有
         Page<T> t = pageFile.getFromCache(pageId);
         if (t != null) {
             page.copy(t);

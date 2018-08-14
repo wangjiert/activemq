@@ -33,6 +33,7 @@ public class DataFile extends LinkedNode<DataFile> implements Comparable<DataFil
 
     protected final File file;
     protected final Integer dataFileId;
+    //创建的时候有赋值过 后来难道不停的改吗
     protected volatile int length;
     protected int typeCode = STANDARD_LOG_FILE;
     protected final SequenceSet corruptedBlocks = new SequenceSet();

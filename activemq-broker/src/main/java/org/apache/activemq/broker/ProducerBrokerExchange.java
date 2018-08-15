@@ -36,8 +36,10 @@ public class ProducerBrokerExchange {
     private static final Logger LOG = LoggerFactory.getLogger(ProducerBrokerExchange.class);
     private ConnectionContext connectionContext;
     private Destination regionDestination;
+    //目前看来没有哪里设置过这个值
     private Region region;
     private ProducerState producerState;
+    //具体代表着什么呢 易变与否感觉像是内存和磁盘的区别一样
     private boolean mutable = true;
     private AtomicLong lastSendSequenceNumber = new AtomicLong(-1);
     private boolean auditProducerSequenceIds;

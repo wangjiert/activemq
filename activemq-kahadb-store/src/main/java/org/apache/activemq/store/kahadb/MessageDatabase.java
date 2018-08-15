@@ -297,6 +297,7 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
     private boolean enableSubscriptionStatistics = false;
 
     //only set when using JournalDiskSyncStrategy.PERIODIC
+    //最后一个异步加入的消息的location
     protected final AtomicReference<Location> lastAsyncJournalUpdate = new AtomicReference<>();
 
     @Override
@@ -1126,6 +1127,7 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
             try {
 
                 long start = System.currentTimeMillis();
+                //这个location很有用啊 记录了这条消息存在哪 并且大小多了五字节 用于表示数据大小和类型
                 location = onJournalStoreComplete == null ? journal.write(sequence, sync) : journal.write(sequence, onJournalStoreComplete) ;
                 long start2 = System.currentTimeMillis();
                 //Track the last async update so we know if we need to sync at the next checkpoint
@@ -1149,6 +1151,7 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
             }
 
             if (scheduler == null && opened.get()) {
+                //应该是这个方法 校验datafile是否还在使用
                 startCheckpoint();
             }
             return location;
@@ -1283,6 +1286,9 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
     @SuppressWarnings("rawtypes")
     protected void process(final KahaAddMessageCommand command, final Location location, final IndexAware runWithIndexLock) throws IOException {
         if (command.hasTransactionInfo()) {
+            //更新索引也是在提交事务的时候做的
+            //写数据到文件也是事务提交的时候做的
+            //那么问题来了 怎么会有两个事务提交呢
             List<Operation> inflightTx = getInflightTx(command.getTransactionInfo());
             inflightTx.add(new AddOperation(command, location, runWithIndexLock));
         } else {

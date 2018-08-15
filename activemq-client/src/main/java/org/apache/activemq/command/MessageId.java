@@ -29,6 +29,7 @@ public class MessageId implements DataStructure, Comparable<MessageId> {
     protected String textView;
     protected ProducerId producerId;
     protected long producerSequenceId;
+    //应该是每个地址都有一个自己的自增计数器
     protected long brokerSequenceId;
 
     private transient String key;

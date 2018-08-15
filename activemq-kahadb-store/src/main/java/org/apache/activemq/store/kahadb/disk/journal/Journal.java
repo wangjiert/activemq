@@ -210,7 +210,10 @@ public class Journal {
     protected int maxFileLength = DEFAULT_MAX_FILE_LENGTH;
     protected int writeBatchSize = DEFAULT_MAX_WRITE_BATCH_SIZE;
 
+    //猜测这个是不停的写在文件的最后面
+    //这个只是做了很多事 真正写数据到文件的还是下面的对象
     protected FileAppender appender;
+    //这个应该是可以随便写在哪
     protected DataFileAccessorPool accessorPool;
 
     protected Map<Integer, DataFile> fileMap = new HashMap<Integer, DataFile>();
@@ -218,6 +221,7 @@ public class Journal {
     protected LinkedNodeList<DataFile> dataFiles = new LinkedNodeList<DataFile>();
 
     //最后一次的location
+    //也记录了最后写入的消息的location
     protected final AtomicReference<Location> lastAppendLocation = new AtomicReference<Location>();
     protected ScheduledFuture cleanupTask;
     protected AtomicLong totalLength = new AtomicLong();
@@ -1039,6 +1043,8 @@ public class Journal {
     }
 
     public Location write(ByteSequence data, boolean sync) throws IOException, IllegalStateException {
+        //没记错的话 这个location没有记录消息具体存在哪
+        //经验证 还是记了的
         Location loc = appender.storeItem(data, Location.USER_TYPE, sync);
         return loc;
     }

@@ -527,6 +527,9 @@ public class KahaDBStore extends MessageDatabase implements PersistenceAdapter, 
         }
 
         @Override
+        //提交事务的时候的处理
+        //怎么就跟想象的不同呢 为什么不是有新消息来就加入到journal中 然后在pagefile中加上索引 如果事务提交了就吧索引写到文件中
+         //看这个方法顺便看一下存储的时候是怎么区分不同的destination的 预测是page0存了每个destination对应的根节点的page num
         public void addMessage(final ConnectionContext context, final Message message) throws IOException {
             final KahaAddMessageCommand command = new KahaAddMessageCommand();
             command.setDestination(dest);

@@ -487,6 +487,7 @@ public class RegionBroker extends EmptyBroker {
             producerExchange.getConnectionContext().getBroker()
                 .addDestination(producerExchange.getConnectionContext(), destination, isAllowTempAutoCreationOnSend());
             producerExchange.setRegion(getRegion(destination));
+            //这个又是干什么呢
             producerExchange.setRegionDestination(null);
         }
 

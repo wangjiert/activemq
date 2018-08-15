@@ -65,6 +65,7 @@ public abstract class Message extends BaseCommand implements MarshallAware, Mess
     protected long expiration;
     protected long timestamp;
     protected long arrival;
+    //broker收到这条消息的时间
     protected long brokerInTime;
     protected long brokerOutTime;
     protected String correlationId;

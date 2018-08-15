@@ -46,6 +46,7 @@ class DataFileAppender implements FileAppender {
     private static final Logger logger = LoggerFactory.getLogger(DataFileAppender.class);
 
     protected final Journal journal;
+    //只是记录了异步的写消息
     protected final Map<Journal.WriteKey, Journal.WriteCommand> inflightWrites;
     protected final Object enqueueMutex = new Object();
     protected WriteBatch nextWriteBatch;
@@ -118,6 +119,7 @@ class DataFileAppender implements FileAppender {
     public Location storeItem(ByteSequence data, byte type, boolean sync) throws IOException {
 
         // Write the packet our internal buffer.
+        //前5字节记录的是什么呢
         int size = data.getLength() + RECORD_HEAD_SPACE;
 
         final Location location = new Location();
@@ -127,6 +129,11 @@ class DataFileAppender implements FileAppender {
         Journal.WriteCommand write = new Journal.WriteCommand(location, data, sync);
 
         WriteBatch batch = enqueue(write);
+        //难道说是通过这个批处理可以知道数据存在哪 但是批处理是异步的 而且也没有存任何存储位置相关的信息啊
+        //索引里面是存了这个location的 那么这个有什么用呢 就是记录一下消息大小吗
+        //索引中不是以消息id做key location做值吗 这个意思不就是可以通过消息id找到消息具体存在哪吗
+        //这样分析 很矛盾啊
+        //之前看的都是什么  enqueue的时候明明就记录了消息的具体位置 在调用返回之前 就已经决定了消息具体写到哪里
         location.setBatch(batch);
         if (sync) {
             try {
@@ -180,6 +187,7 @@ class DataFileAppender implements FileAppender {
 
             while ( true ) {
                 if (nextWriteBatch == null) {
+                    //会不会有一个超大消息直接超过文件最大长度
                     DataFile file = journal.getCurrentDataFile(write.location.getSize());
                     nextWriteBatch = newWriteBatch(write, file);
                     enqueueMutex.notifyAll();
@@ -251,7 +259,7 @@ class DataFileAppender implements FileAppender {
      * accomplished attaching the same CountDownLatch instance to every force
      * request in a group.
      */
-    protected void processQueue() {
+    protected void  processQueue() {
         DataFile dataFile = null;
         RecoverableRandomAccessFile file = null;
         WriteBatch wb = null;
@@ -293,11 +301,14 @@ class DataFileAppender implements FileAppender {
 
                 // Write an empty batch control record.
                 buff.reset();
+                //写这个干什么
+                //先写头部信息 一批数据写完了再回头改里面的数据大小和校验值
                 buff.write(EMPTY_BATCH_CONTROL_RECORD);
 
                 boolean forceToDisk = false;
                 while (write != null) {
                     forceToDisk |= write.sync | (syncOnComplete && write.onComplete != null);
+                    //额外的五个字节 用来记录数据的大小和消息类型 数据大小已经包含了这五个字节
                     buff.writeInt(write.location.getSize());
                     buff.writeByte(write.location.getType());
                     buff.write(write.data.getData(), write.data.getOffset(), write.data.getLength());
@@ -305,11 +316,14 @@ class DataFileAppender implements FileAppender {
                 }
 
                 // append 'unset', zero length next batch so read can always find eof
+                //看来每一个批处理完都有一个EOF啊
                 buff.write(Journal.EOF_RECORD);
 
+                //最底层的字节数组还是只有一个
                 ByteSequence sequence = buff.toByteSequence();
 
                 // Now we can fill in the batch control record properly.
+                //重置偏移量而已
                 buff.reset();
                 buff.skip(RECORD_HEAD_SPACE + Journal.BATCH_CONTROL_RECORD_MAGIC.length);
                 buff.writeInt(sequence.getLength() - Journal.BATCH_CONTROL_RECORD_SIZE - Journal.EOF_RECORD.length);
@@ -332,8 +346,10 @@ class DataFileAppender implements FileAppender {
                         logger.info("Ave writeSize: " + all/maxStat);
                     }
                 }
+                //写到文件了
                 file.write(sequence.getData(), sequence.getOffset(), sequence.getLength());
 
+                //暂时没有用
                 ReplicationTarget replicationTarget = journal.getReplicationTarget();
                 if( replicationTarget!=null ) {
                     replicationTarget.replicate(wb.writes.getHead().location, sequence, forceToDisk);

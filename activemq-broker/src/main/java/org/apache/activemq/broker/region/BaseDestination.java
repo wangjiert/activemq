@@ -63,6 +63,8 @@ public abstract class BaseDestination implements Destination {
     protected final AtomicBoolean started = new AtomicBoolean();
     protected final ActiveMQDestination destination;
     protected final Broker broker;
+    //哇哦 看来一个地址一个store啊
+    //
     protected final MessageStore store;
     protected SystemUsage systemUsage;
     protected MemoryUsage memoryUsage;
@@ -104,6 +106,7 @@ public abstract class BaseDestination implements Destination {
     private long lastActiveTime=0l;
     private boolean reduceMemoryFootprint = false;
     protected final Scheduler scheduler;
+    //这应该表示的是是否关闭了这个地址吧
     private boolean disposed = false;
     private boolean doOptimzeMessageStorage = true;
     /*

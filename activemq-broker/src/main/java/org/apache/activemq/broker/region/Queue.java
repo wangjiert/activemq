@@ -127,6 +127,7 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
     private final ReentrantReadWriteLock pagedInPendingDispatchLock = new ReentrantReadWriteLock();
     //感觉这个是不是消息的缓存
     protected QueueDispatchPendingList dispatchPendingList = new QueueDispatchPendingList();
+    //正在进行发送的消息
     private AtomicInteger pendingSends = new AtomicInteger(0);
     private MessageGroupMap messageGroupOwners;
     private DispatchPolicy dispatchPolicy = new RoundRobinDispatchPolicy();
@@ -905,6 +906,7 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
         producerExchange.incrementSend();
         pendingSends.incrementAndGet();
         do {
+            //应该是阻塞到有空间为止
             checkUsage(context, producerExchange, message);
             message.getMessageId().setBrokerSequenceId(getDestinationSequenceId());
             if (store != null && message.isPersistent()) {
@@ -918,6 +920,7 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
                         result = store.asyncAddQueueMessage(context, message, isOptimizeStorage());
                         result.addListener(new PendingMarshalUsageTracker(message));
                     } else {
+                        //就是新建一个command然后放到集合 没真正的处理呀 应该是等客户端提交吗 不应该先写到数据文件然后再等客户端提交吗
                         store.addMessage(context, message);
                     }
                 } catch (Exception e) {

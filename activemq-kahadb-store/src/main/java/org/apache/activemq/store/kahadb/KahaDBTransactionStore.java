@@ -377,6 +377,8 @@ public class KahaDBTransactionStore implements TransactionStore {
      * @param message
      * @throws IOException
      */
+    //既然每个地址都有自己的store 那文件名会冲突吗 还是就是用的同一个文件
+    //貌似page0对应的就是根节点 如果都用同一个文件那怎么玩呢
     void addMessage(ConnectionContext context, final MessageStore destination, final Message message)
             throws IOException {
 
@@ -384,7 +386,9 @@ public class KahaDBTransactionStore implements TransactionStore {
             if (message.getTransactionId().isXATransaction() || theStore.isConcurrentStoreAndDispatchTransactions() == false) {
                 destination.addMessage(context, message);
             } else {
+                //搞这么多事务对象干什么 闹吗
                 Tx tx = getTx(message.getTransactionId());
+                //加到集合里面去 应该有个新线程会去处理这个集合吧
                 tx.add(new AddMessageCommand(context) {
                     @Override
                     public Message getMessage() {
@@ -393,12 +397,15 @@ public class KahaDBTransactionStore implements TransactionStore {
                     @Override
                     public Future<Object> run(ConnectionContext ctx) throws IOException {
                         destination.addMessage(ctx, message);
+                        //所有人都是拿到这个对象 难道是有个锁保证了一次只处理一个吗
                         return AbstractMessageStore.FUTURE;
                     }
 
                 });
             }
         } else {
+            //没有事务的情况 应该里面会自己建一个事务吧
+            //看来是不会了  还有不是事务的添加消息吗 nb
             destination.addMessage(context, message);
         }
     }

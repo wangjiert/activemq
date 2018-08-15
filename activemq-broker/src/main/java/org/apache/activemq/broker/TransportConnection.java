@@ -568,6 +568,7 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
     }
 
     @Override
+    //新加入消息
     public Response processMessage(Message messageSend) throws Exception {
         ProducerId producerId = messageSend.getProducerId();
         ProducerBrokerExchange producerExchange = getProducerBrokerExchange(producerId);

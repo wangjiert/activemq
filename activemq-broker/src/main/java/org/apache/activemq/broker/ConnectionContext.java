@@ -49,6 +49,8 @@ public class ConnectionContext {
     private ConnectionId connectionId;
     private String clientId;
     private String userName;
+    //一个连接是否是重新连接的吗
+    //是不是一个连接断了之后会自动使用原来的信息重新连接
     private boolean reconnect;
     private WireFormatInfo wireFormatInfo;
     private Object longTermStoreContext;

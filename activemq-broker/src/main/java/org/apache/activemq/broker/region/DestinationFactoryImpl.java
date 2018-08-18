@@ -81,7 +81,9 @@ public class DestinationFactoryImpl extends DestinationFactory {
                 queue.initialize();
                 return queue;
             } else {
+                //这个store是地址相关的  每一个地址只有一个messagestore
                 MessageStore store = persistenceAdapter.createQueueMessageStore((ActiveMQQueue)destination);
+                //这么6 所有的地址都用同一个任务执行对象 不会很拥挤吗
                 Queue queue = new Queue(brokerService, destination, store, destinationStatistics, taskRunnerFactory);
                 configureQueue(queue, destination);
                 queue.initialize();

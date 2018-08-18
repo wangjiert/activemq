@@ -116,6 +116,7 @@ public class KahaDBStore extends MessageDatabase implements PersistenceAdapter, 
     // or order w.r.t cache
     private boolean concurrentStoreAndDispatchTopics = false;
     private final boolean concurrentStoreAndDispatchTransactions = false;
+    //最大的异步任务数 每个messagestore都用的这个值 看来不是用来控制整个系统的异步数的
     private int maxAsyncJobs = MAX_ASYNC_JOBS;
     private final KahaDBTransactionStore transactionStore;
     private TransactionIdTransformer transactionIdTransformer;
@@ -412,10 +413,14 @@ public class KahaDBStore extends MessageDatabase implements PersistenceAdapter, 
         return (KahaDBMessageStore) store.getDelegate();
     }
 
+    //怎么给我一种感觉 这个对象是真正实现消息操作的类 但是具体在写文件的时候用的又是kahadbstore提供的方法
     public class KahaDBMessageStore extends AbstractMessageStore {
         protected final Map<AsyncJobKey, StoreTask> asyncTaskMap = new HashMap<AsyncJobKey, StoreTask>();
+        //对应的jms地址转换成的kahadb内部地址  就取了地址名和类型
         protected KahaDestination dest;
+        //使用的是kahadb的配置值
         private final int maxAsyncJobs;
+        //用于控制异步线程数的 信号量总大小就是上面的值
         private final Semaphore localDestinationSemaphore;
         protected final Set<String> ackedAndPrepared = new HashSet<>();
         protected final Set<String> rolledBackAcks = new HashSet<>();
@@ -1192,11 +1197,18 @@ public class KahaDBStore extends MessageDatabase implements PersistenceAdapter, 
     }
 
     @Override
+    //一个地址对应一个messagestore
+    //数据存储在统一的地方 这个对象有什么用呢
     public MessageStore createQueueMessageStore(ActiveMQQueue destination) throws IOException {
+        //转换就是取了一下地址名字和类型然后拼成字符串就完了
         String key = key(convert(destination));
+        //上面不是有转换结果吗 又来一次这么浪费的吗
+        //从这里可以看出来 一个地址只会对应唯一的messagestore
         MessageStore store = storeCache.get(key(convert(destination)));
         if (store == null) {
             final MessageStore queueStore = this.transactionStore.proxy(new KahaDBMessageStore(destination));
+            //这种设计好吗 不加锁控制 只要没有就创建新的messagestore 然后放到map里面 这个时候如果已经有了就返回已经有的
+            //不浪费吗  直接提前锁 然后判断是否要创建多好
             store = storeCache.putIfAbsent(key, queueStore);
             if (store == null) {
                 store = queueStore;
@@ -1280,6 +1292,7 @@ public class KahaDBStore extends MessageDatabase implements PersistenceAdapter, 
     }
 
     @Override
+    //看来审计还有其他用途啊 直接可以知道一个生产者最后上传的消息的id
     public long getLastProducerSequenceId(ProducerId id) {
         indexLock.writeLock().lock();
         try {
@@ -1363,6 +1376,7 @@ public class KahaDBStore extends MessageDatabase implements PersistenceAdapter, 
         return rc;
     }
 
+    //应该就取了两个信息吧 地址的名字和类型
     KahaDestination convert(ActiveMQDestination dest) {
         KahaDestination rc = new KahaDestination();
         rc.setName(dest.getPhysicalName());

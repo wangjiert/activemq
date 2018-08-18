@@ -36,6 +36,7 @@ public class BitArray implements Serializable {
     static final int INT_SIZE = 32;
     static final int SHORT_SIZE = 16;
     static final int BYTE_SIZE = 8;
+    //64个 代表了每一位为一
     private static final long[] BIT_VALUES = {0x0000000000000001L, 0x0000000000000002L, 0x0000000000000004L,
                                               0x0000000000000008L, 0x0000000000000010L, 0x0000000000000020L,
                                               0x0000000000000040L, 0x0000000000000080L, 0x0000000000000100L,
@@ -59,6 +60,7 @@ public class BitArray implements Serializable {
                                               0x1000000000000000L, 0x2000000000000000L, 0x4000000000000000L,
                                               0x8000000000000000L};
     private long bits;
+    //记录里面有多少个记录
     private int length;
 
     /**

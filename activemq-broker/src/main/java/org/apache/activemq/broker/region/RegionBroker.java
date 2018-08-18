@@ -321,6 +321,8 @@ public class RegionBroker extends EmptyBroker {
     }
 
     @Override
+    //根据jms地址创建一个broker内部地址
+    //会不会是由于客户端的多线程效果导致这个方法对于同一个地址进入多次
     public Destination addDestination(ConnectionContext context, ActiveMQDestination destination, boolean createIfTemp) throws Exception {
 
         Destination answer;
@@ -334,6 +336,7 @@ public class RegionBroker extends EmptyBroker {
             return answer;
         }
 
+        //又是一段废代码 鉴定完毕
         synchronized (destinationGate) {
             answer = destinations.get(destination);
             if (answer != null) {
@@ -355,11 +358,13 @@ public class RegionBroker extends EmptyBroker {
                     return answer;
                 } else {
                     // In case of intermediate remove or add failure
+                    //这么会玩吗  只有这里往里面加东西了 但是进入这里的条件是之前必须已经加过看
                     destinationGate.put(destination, destination);
                 }
             }
         }
 
+        //直接从这里看
         try {
             boolean create = true;
             if (destination.isTemporary()) {
@@ -368,8 +373,11 @@ public class RegionBroker extends EmptyBroker {
             //以queue region为例
             //等同于一个单例  地址在这里仅仅是提供了一个类型 并不是说每一个地址都去创建一个broker内部的地址
             answer = getRegion(destination).addDestination(context, destination, create);
+            //这些所谓的缓存是怎么控制缓存数量的呢 现在看到的都是不停的加
+            //还是说这些东西很少并且不怎么占空间 所以可以全部缓存下来
             destinations.put(destination, answer);
         } finally {
+            //没有用的代码
             synchronized (destinationGate) {
                 destinationGate.remove(destination);
                 destinationGate.notifyAll();
@@ -486,6 +494,7 @@ public class RegionBroker extends EmptyBroker {
             // ensure the destination is registered with the RegionBroker
             producerExchange.getConnectionContext().getBroker()
                 .addDestination(producerExchange.getConnectionContext(), destination, isAllowTempAutoCreationOnSend());
+            //这个region是单例的
             producerExchange.setRegion(getRegion(destination));
             //这个又是干什么呢
             producerExchange.setRegionDestination(null);

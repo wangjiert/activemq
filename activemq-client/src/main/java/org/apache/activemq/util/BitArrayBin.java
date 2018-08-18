@@ -28,9 +28,12 @@ public class BitArrayBin implements Serializable {
 
     private static final long serialVersionUID = 1L;
     private final LinkedList<BitArray> list;
+    //记录了这个array有多少个bitarray
     private int maxNumberOfArrays;
     private int firstIndex = -1;  // leave 'int' for old serialization compatibility and introduce new 'long' field
     private long lastInOrderBit=-1;
+    //这个是每次新加东西都会加吗
+    //这应该是表示序列是从什么位置开始的吧
     private long longFirstIndex=-1;
     /**
      * Create a BitArrayBin to a certain window size (number of messages to
@@ -39,6 +42,7 @@ public class BitArrayBin implements Serializable {
      * @param windowSize
      */
     public BitArrayBin(int windowSize) {
+        //果然多申请了空间
         maxNumberOfArrays = ((windowSize + 1) / BitArray.LONG_SIZE) + 1;
         maxNumberOfArrays = Math.max(maxNumberOfArrays, 1);
         list = new LinkedList<BitArray>();
@@ -111,6 +115,7 @@ public class BitArrayBin implements Serializable {
      * @param index
      * @return BitArray
      */
+    //这个里面应该就是longFirstIndex赋值的地方
     private BitArray getBitArray(long index) {
         int bin = getBin(index);
         BitArray answer = null;
@@ -144,6 +149,7 @@ public class BitArrayBin implements Serializable {
     private int getBin(long index) {
         int answer = 0;
         if (longFirstIndex < 0) {
+            //这个index为什么不加一呢
             longFirstIndex = (index - (index % BitArray.LONG_SIZE));
         } else if (longFirstIndex >= 0) {
             answer = (int)((index - longFirstIndex) / BitArray.LONG_SIZE);
@@ -173,8 +179,13 @@ public class BitArrayBin implements Serializable {
             BitArray last = null;
             for (int lastBitArrayIndex = maxNumberOfArrays -1; lastBitArrayIndex >= 0; lastBitArrayIndex--) {
                 last = list.get(lastBitArrayIndex);
+                //这里还进行了是否为空的判断说明预申请的数量是大于实际值的
                 if (last != null) {
+                    //这里减1是不是说明返回的序列的计算是从0开始的
                     result += last.length() -1;
+                    //为什么要乘以64
+                    //计算思路就是 这个数组里面有n个bitarray说明前n-1个bitarray是满的 而这个对象里面记录了多少个对应位就说明发了多少条消息
+                    //所以用n-1乘以64加上最后一个bitarray的记录数就是总共的消息数
                     result += lastBitArrayIndex * BitArray.LONG_SIZE;
                     break;
                 }

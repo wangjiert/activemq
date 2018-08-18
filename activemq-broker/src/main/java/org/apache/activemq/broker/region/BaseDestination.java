@@ -128,6 +128,7 @@ public abstract class BaseDestination implements Destination {
         this.store = store;
         this.destination = destination;
         // let's copy the enabled property from the parent DestinationStatistics
+        //这个父类统计是brokerservice创建的 所有创建的地址的parent都是同一个
         this.destinationStatistics.setEnabled(parentStats.isEnabled());
         this.destinationStatistics.setParent(parentStats);
         this.systemUsage = new SystemUsage(brokerService.getProducerSystemUsage(), destination.toString());

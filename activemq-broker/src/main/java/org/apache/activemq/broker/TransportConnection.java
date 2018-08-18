@@ -572,6 +572,7 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
     public Response processMessage(Message messageSend) throws Exception {
         ProducerId producerId = messageSend.getProducerId();
         ProducerBrokerExchange producerExchange = getProducerBrokerExchange(producerId);
+        //没什么技术含量
         if (producerExchange.canDispatch(messageSend)) {
             broker.send(producerExchange, messageSend);
         }

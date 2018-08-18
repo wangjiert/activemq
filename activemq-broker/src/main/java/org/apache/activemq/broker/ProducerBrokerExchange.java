@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Holds internal state in the broker for a MessageProducer
  */
+//每个生产者对应一个这个对象
 public class ProducerBrokerExchange {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProducerBrokerExchange.class);
@@ -41,8 +42,11 @@ public class ProducerBrokerExchange {
     private ProducerState producerState;
     //具体代表着什么呢 易变与否感觉像是内存和磁盘的区别一样
     private boolean mutable = true;
+    //记录了最后一次发送的消息的序列吧
     private AtomicLong lastSendSequenceNumber = new AtomicLong(-1);
+    //应该是表示是都记录生产者id吧
     private boolean auditProducerSequenceIds;
+    //
     private boolean isNetworkProducer;
     private BrokerService brokerService;
     private FlowControlInfo flowControlInfo = new FlowControlInfo();
@@ -137,10 +141,14 @@ public class ProducerBrokerExchange {
      *
      * @return false if message should be ignored as a duplicate
      */
+    //就是防止消息重复
     public boolean canDispatch(Message messageSend) {
         boolean canDispatch = true;
+        //为什么只有持久化消息才进行重复排查  要是内存中的难道可以随便发吗
         if (auditProducerSequenceIds && messageSend.isPersistent()) {
+            //好像都是一样的套路 下一级对象的id会包含上一级对象的id
             final long producerSequenceId = messageSend.getMessageId().getProducerSequenceId();
+            //难道只有网络的生产者才有专门的审计吗 其他的都是直接记录了最后一个消息的id吗
             if (isNetworkProducer) {
                 //  messages are multiplexed on this producer so we need to query the persistenceAdapter
                 long lastStoredForMessageProducer = getStoredSequenceIdForMessage(messageSend.getMessageId());

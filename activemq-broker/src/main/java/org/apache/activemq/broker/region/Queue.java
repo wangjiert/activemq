@@ -107,6 +107,7 @@ import org.slf4j.MDC;
  */
 public class Queue extends BaseDestination implements Task, UsageListener, IndexListener {
     protected static final Logger LOG = LoggerFactory.getLogger(Queue.class);
+    //一个被共享的对象
     protected final TaskRunnerFactory taskFactory;
     protected TaskRunner taskRunner;
     private final ReentrantReadWriteLock consumersLock = new ReentrantReadWriteLock();

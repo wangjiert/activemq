@@ -69,6 +69,7 @@ public abstract class AbstractRegion implements Region {
     protected final Map<ConsumerId, Subscription> subscriptions = new ConcurrentHashMap<ConsumerId, Subscription>();
     protected final SystemUsage usageManager;
     protected final DestinationFactory destinationFactory;
+    //会统计所有的创建的地址
     protected final DestinationStatistics destinationStatistics;
     protected final RegionStatistics regionStatistics = new RegionStatistics();
     protected final RegionBroker broker;
@@ -145,9 +146,11 @@ public abstract class AbstractRegion implements Region {
 
     @Override
     //一个broker只有一个这个对象 所以所有的地址都是共享的 会被所有的连接看到
+    //看来是会返回null的 比如临时地址 并且不自动创建临时地址的时候
     public Destination addDestination(ConnectionContext context, ActiveMQDestination destination,
             boolean createIfTemporary) throws Exception {
 
+        //这种是不是设计模式啊 刚开始的时候什么都不管 只要集合里没存就往里加 真正实现添加的代码里会加锁 然后再从集合里去 有了就不做添加的操作了
         destinationsLock.writeLock().lock();
         try {
             //这个对象一个broker只有一个 然后这个对象又缓存了地址;很明显这个集合缓存了全部的地址 那么肯定有重复的地址进来的
@@ -158,6 +161,7 @@ public abstract class AbstractRegion implements Region {
                 if (destination.isTemporary() == false || createIfTemporary) {
                     // Limit the number of destinations that can be created if
                     // maxDestinations has been set on a policy
+                    //都是用抛异常来进行校验的 这样效率能保证吗
                     validateMaxDestinations(destination);
 
                     LOG.debug("{} adding destination: {}", broker.getBrokerName(), destination);

@@ -29,6 +29,7 @@ import org.apache.activemq.command.*;
  */
 public abstract class DestinationMapEntry<T> implements Comparable<T> {
 
+    //这个东西加进来干嘛 而且很明显只有一个对象 除非是配置成可以匹配多个具体地址的那种形式才有用吧
     protected ActiveMQDestination destination;
 
     public int compareTo(Object that) {

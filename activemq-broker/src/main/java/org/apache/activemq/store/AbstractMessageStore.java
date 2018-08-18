@@ -27,6 +27,7 @@ import org.apache.activemq.usage.MemoryUsage;
 
 abstract public class AbstractMessageStore implements MessageStore {
     public static final ListenableFuture<Object> FUTURE;
+    //这个messagestore对应的地址
     protected final ActiveMQDestination destination;
     protected boolean prioritizedMessages;
     protected IndexListener indexListener;

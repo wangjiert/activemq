@@ -158,6 +158,7 @@ public class TaskRunnerFactory implements Executor {
     public TaskRunner createTaskRunner(Task task, String name) {
         init();
         ExecutorService executor = executorRef.get();
+        //task都是queue定义的
         if (executor != null) {
             return new PooledTaskRunner(executor, task, maxIterationsPerRun);
         } else {

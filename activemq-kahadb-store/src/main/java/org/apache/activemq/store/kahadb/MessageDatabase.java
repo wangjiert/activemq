@@ -248,6 +248,7 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
 
     protected PageFile pageFile;
     protected Journal journal;
+    //很关键的对象啊 记录了重要数据 这个对象会被写入持久化存储 就是page的第0页
     protected Metadata metadata = new Metadata();
 
     protected MetadataMarshaller metadataMarshaller = new MetadataMarshaller();
@@ -2474,6 +2475,7 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
         StoredDestination rc = storedDestinations.get(key);
         if (rc == null) {
             boolean topic = destination.getType() == KahaDestination.DestinationType.TOPIC || destination.getType() == KahaDestination.DestinationType.TEMP_TOPIC;
+            //创建新的地址
             rc = loadStoredDestination(tx, key, topic);
             // Cache it. We may want to remove/unload destinations from the
             // cache that are not used for a while
@@ -2515,6 +2517,7 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
                 rc.ackPositions = new ListIndex<>(pageFile, tx.allocate());
                 rc.subLocations = new ListIndex<>(pageFile, tx.allocate());
             }
+            //存起来会写到磁盘里面
             metadata.destinations.put(tx, key, rc);
         }
 
@@ -3525,6 +3528,7 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
         void load(Transaction tx) throws IOException {
             defaultPriorityIndex.setKeyMarshaller(LongMarshaller.INSTANCE);
             defaultPriorityIndex.setValueMarshaller(messageKeysMarshaller);
+            //就是初始化一下根节点并写到磁盘
             defaultPriorityIndex.load(tx);
             lowPriorityIndex.setKeyMarshaller(LongMarshaller.INSTANCE);
             lowPriorityIndex.setValueMarshaller(messageKeysMarshaller);

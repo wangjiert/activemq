@@ -33,6 +33,7 @@ class DedicatedTaskRunner implements TaskRunner {
     private boolean pending;
     private boolean shutdown;
 
+    //就是每次都开启一个新线程
     public DedicatedTaskRunner(final Task task, String name, int priority, boolean daemon) {
         this.task = task;
         thread = new Thread(name) {

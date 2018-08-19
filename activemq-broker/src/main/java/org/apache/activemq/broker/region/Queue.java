@@ -139,6 +139,7 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
     private final Map<MessageId, Runnable> messagesWaitingForSpace = new LinkedHashMap<MessageId, Runnable>();
     private boolean useConsumerPriority = true;
     private boolean strictOrderDispatch = false;
+    //这个东西的作用是什么
     private final QueueDispatchSelector dispatchSelector;
     private boolean optimizedDispatch = false;
     private boolean iterationRunning = false;
@@ -382,6 +383,7 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
     }
 
     @Override
+    //初始化
     public void initialize() throws Exception {
 
         if (this.messages == null) {
@@ -399,11 +401,14 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
         // If we are cursoring to disk..it's not and issue because it does not
         // block due
         // to large disk sizes.
+        //这个以后好好看看 会由于网络堵塞造成死锁
         if (messages instanceof VMPendingMessageCursor) {
             this.systemUsage = brokerService.getSystemUsage();
             memoryUsage.setParent(systemUsage.getMemoryUsage());
         }
 
+        //好像这个对象一旦创建  任务就开始自动跑起来了
+        //线程池的实现里面没有启动 每次新启线程的跑起来了
         this.taskRunner = taskFactory.createTaskRunner(this, "Queue:" + destination.getPhysicalName());
 
         super.initialize();

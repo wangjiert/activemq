@@ -116,6 +116,7 @@ public class BTreeIndex<Key,Value> implements Index<Key,Value> {
     }    
 
     private PageFile pageFile;
+    //根page的id
     private long pageId;
     private AtomicBoolean loaded = new AtomicBoolean();
     

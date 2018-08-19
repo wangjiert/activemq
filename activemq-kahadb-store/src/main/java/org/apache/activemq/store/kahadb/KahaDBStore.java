@@ -421,6 +421,7 @@ public class KahaDBStore extends MessageDatabase implements PersistenceAdapter, 
         //使用的是kahadb的配置值
         private final int maxAsyncJobs;
         //用于控制异步线程数的 信号量总大小就是上面的值
+        //这里被当作锁在用 保证只有一个线程进行恢复统计数据
         private final Semaphore localDestinationSemaphore;
         protected final Set<String> ackedAndPrepared = new HashSet<>();
         protected final Set<String> rolledBackAcks = new HashSet<>();
@@ -780,10 +781,12 @@ public class KahaDBStore extends MessageDatabase implements PersistenceAdapter, 
 
         protected void lockAsyncJobQueue() {
             try {
+                //一次性全部获取里锁住
+                //这个信号量只会当作锁用吗 每次都是获取全部信号量 也就是如果有其他用途 并且被用了这里就无法在获取了
                 if (!this.localDestinationSemaphore.tryAcquire(this.maxAsyncJobs, 60, TimeUnit.SECONDS)) {
                     throw new TimeoutException(this +" timeout waiting for localDestSem:" + this.localDestinationSemaphore);
                 }
-            } catch (Exception e) {
+            } catch (Exception e) {//这是什么操作 上面在抛出异常 这里又捕获了
                 LOG.error("Failed to lock async jobs for " + this.destination, e);
             }
         }
@@ -810,9 +813,11 @@ public class KahaDBStore extends MessageDatabase implements PersistenceAdapter, 
         }
 
         @Override
+        //恢复统计数据
         protected void recoverMessageStoreStatistics() throws IOException {
             try {
                 MessageStoreStatistics recoveredStatistics;
+                //这个方法具体有什么作用  既不返回值也没有异常抛出 并且下面也有锁
                 lockAsyncJobQueue();
                 indexLock.writeLock().lock();
                 try {

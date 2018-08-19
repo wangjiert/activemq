@@ -78,7 +78,7 @@ public class SystemUsage implements Service {
         this.storeUsage = new StoreUsage(parent.storeUsage, name + ":store");
         this.tempUsage = new TempUsage(parent.tempUsage, name + ":temp");
         this.jobSchedulerUsage = new JobSchedulerUsage(parent.jobSchedulerUsage, name + ":jobScheduler");
-        this.memoryUsage.setExecutor(getExecutor());
+        this.memoryUsage.setExecutor  (getExecutor());
         this.storeUsage.setExecutor(getExecutor());
         this.tempUsage.setExecutor(getExecutor());
     }

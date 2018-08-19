@@ -34,6 +34,7 @@ class PooledTaskRunner implements TaskRunner {
     private boolean queued;
     private boolean shutdown;
     private boolean iterating;
+    //正在允许任务的线程 任务执行完后重置为空
     private volatile Thread runningThread;
 
     public PooledTaskRunner(Executor executor, final Task task, int maxIterationsPerRun) {

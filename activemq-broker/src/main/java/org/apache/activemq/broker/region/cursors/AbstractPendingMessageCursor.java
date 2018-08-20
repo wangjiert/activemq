@@ -45,10 +45,13 @@ public abstract class AbstractPendingMessageCursor implements PendingMessageCurs
     protected int maxAuditDepth = BaseDestination.MAX_AUDIT_DEPTH;
     protected boolean enableAudit=true;
     protected ActiveMQMessageAudit audit;
+    //是否使用缓存吗
     protected boolean useCache=true;
+    //额 这个条件就是用上一个条件加额外条件进行判断的
     protected boolean cacheEnabled=true;
     protected boolean started=false;
     protected MessageReference last = null;
+    //是否支持优先级吧
     protected final boolean prioritizedMessages;
 
     public AbstractPendingMessageCursor(boolean prioritizedMessages) {

@@ -2207,6 +2207,7 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
     // StoredDestination related implementation methods.
     // /////////////////////////////////////////////////////////////////
 
+    //这种缓存挺多的  真的对内存没有影响吗
     protected final HashMap<String, StoredDestination> storedDestinations = new HashMap<>();
 
     static class MessageKeys {
@@ -2305,6 +2306,7 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
     class StoredDestination {
 
         MessageOrderIndex orderIndex = new MessageOrderIndex();
+        //值好像是内部使用的消息编号 每个地址自己内部的编号独立
         BTreeIndex<Location, Long> locationIndex;
         BTreeIndex<String, Long> messageIdIndex;
 
@@ -3442,6 +3444,8 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
     // Internal conversion methods.
     // /////////////////////////////////////////////////////////////////
 
+    //感觉像是在记录每个优先级中消息已经消费的偏移量 应该是一个消息被读到缓存就加1吧
+    //这样的话 每当一个消息确认的时候呢 是不是会吧消息直接删掉 那偏移量不是有问题吗
     class MessageOrderCursor{
         long defaultCursorPosition;
         long lowPriorityCursorPosition;
@@ -3506,7 +3510,9 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
         BTreeIndex<Long, MessageKeys> defaultPriorityIndex;
         BTreeIndex<Long, MessageKeys> lowPriorityIndex;
         BTreeIndex<Long, MessageKeys> highPriorityIndex;
+        //应该和数据库中的游标功能一样吧
         final MessageOrderCursor cursor = new MessageOrderCursor();
+        //这个难道是不是记录的下一个消息的内部id吗
         Long lastDefaultKey;
         Long lastHighKey;
         Long lastLowKey;

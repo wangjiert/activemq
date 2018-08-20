@@ -32,6 +32,7 @@ public class StatisticImpl implements Statistic, Resettable {
     private String description;
     private long startTime;
     private long lastSampleTime;
+    //能不能重置吧
     private boolean doReset = true;
 
     public StatisticImpl(String name, String unit, String description) {

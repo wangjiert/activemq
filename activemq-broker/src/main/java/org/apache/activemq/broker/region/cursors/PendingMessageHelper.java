@@ -33,6 +33,7 @@ public class PendingMessageHelper {
 
     public PendingMessageHelper(Map<MessageId, PendingNode> map,
             SizeStatisticImpl messageSize) {
+        //在搞笑吗 调这个方法有什么用
         super();
         this.map = map;
         this.messageSize = messageSize;

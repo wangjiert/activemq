@@ -55,9 +55,12 @@ public class FilePendingMessageCursor extends AbstractPendingMessageCursor imple
     private static final AtomicLong NAME_COUNT = new AtomicLong();
 
     protected Broker broker;
+    //这个东西看起来像是把东西存在磁盘上的
+    //那memoryList这个对象又是干嘛的呢 把消息从这个对象取出来然后放到memoryList中吗
     private final PListStore store;
     private final String name;
     //很明显内存相关的一个对象
+    //和下面的对象的消息不存在重叠
     private PendingList memoryList;
     //这个东西应该是直接和store相关的
     private PList diskList;

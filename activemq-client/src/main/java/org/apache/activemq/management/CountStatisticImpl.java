@@ -27,6 +27,7 @@ import javax.management.j2ee.statistics.CountStatistic;
  */
 public class CountStatisticImpl extends StatisticImpl implements CountStatistic {
 
+    //确认消息之后这个计数器会减小 也就是这个记录的是没有被消息的消息吗
     private final AtomicLong counter = new AtomicLong(0);
     private CountStatisticImpl parent;
 
@@ -80,6 +81,7 @@ public class CountStatisticImpl extends StatisticImpl implements CountStatistic 
         }
     }
 
+    //看起来像是在确认消息
     public void subtract(long amount) {
         if (isEnabled()) {
             counter.addAndGet(-amount);

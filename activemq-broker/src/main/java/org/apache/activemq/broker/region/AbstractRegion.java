@@ -165,9 +165,11 @@ public abstract class AbstractRegion implements Region {
                     validateMaxDestinations(destination);
 
                     LOG.debug("{} adding destination: {}", broker.getBrokerName(), destination);
+                    //创建了一个内部的地址
                     dest = createDestination(context, destination);
                     // intercept if there is a valid interceptor defined
                     DestinationInterceptor destinationInterceptor = broker.getDestinationInterceptor();
+                    //实现链式调用的地方
                     if (destinationInterceptor != null) {
                         dest = destinationInterceptor.intercept(dest);
                     }

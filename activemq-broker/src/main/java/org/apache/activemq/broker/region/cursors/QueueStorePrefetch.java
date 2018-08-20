@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
  */
 class QueueStorePrefetch extends AbstractStoreCursor {
     private static final Logger LOG = LoggerFactory.getLogger(QueueStorePrefetch.class);
+    //kahadb的代理store
     private final MessageStore store;
     private final Queue queue;
     private final Broker broker;
@@ -65,8 +66,8 @@ class QueueStorePrefetch extends AbstractStoreCursor {
         }
     }
 
-
-
+    //从统计对象里面取出来的
+    //地址里面的消息个数
     @Override
     protected synchronized int getStoreSize() {
         try {
@@ -106,6 +107,7 @@ class QueueStorePrefetch extends AbstractStoreCursor {
     }
 
     @Override
+    //就是重置了几个位置记录相关的变量
     protected void resetBatch() {
         this.store.resetBatching();
     }

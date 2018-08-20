@@ -18,9 +18,12 @@ package org.apache.activemq.management;
 
 public class SizeStatisticImpl extends StatisticImpl {
 
+    //添加的次数吗
+    //应该是操作的次数
     private long count;
     private long maxSize;
     private long minSize;
+    //总的消息个数
     private long totalSize;
     private SizeStatisticImpl parent;
 
@@ -72,6 +75,9 @@ public class SizeStatisticImpl extends StatisticImpl {
      *
      * @param size
      */
+    //设置的是总大小  count也加一 那说明count统计的是操作次数
+    //把总大小拿去和最大值,最小值比较 然后设置是为啥
+    //看不出这样的意义何在
     public synchronized void setTotalSize(long size) {
         count++;
         totalSize = size;

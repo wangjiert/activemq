@@ -87,10 +87,14 @@ public final class BTreeNode<Key,Value> {
 
         private BTreeIterator(Transaction tx, BTreeNode<Key, Value> current, int nextIndex, Key endKey) {
             this.tx = tx;
+            //会慢慢的移动
             this.current = current;
+            //每到了一个新的分支会重置为0
             this.nextIndex=nextIndex;
+            //这里用Key比较是为什么  直接用index表示也能实现的吧
             this.endKey = endKey;
             if (endKey != null && endKey.equals(0l)) {
+                //这个方法应该是不会抛出错误导致线程终止吧
                 Thread.dumpStack();
             }
         }

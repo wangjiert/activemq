@@ -32,6 +32,7 @@ abstract public class AbstractMessageStore implements MessageStore {
     protected boolean prioritizedMessages;
     //由queue类实现了这个接口
     protected IndexListener indexListener;
+    //统计消息的大小和个数
     protected final MessageStoreStatistics messageStoreStatistics = new MessageStoreStatistics();
 
     public AbstractMessageStore(ActiveMQDestination destination) {

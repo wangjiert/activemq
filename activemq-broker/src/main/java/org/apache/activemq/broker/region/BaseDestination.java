@@ -89,11 +89,15 @@ public abstract class BaseDestination implements Destination {
     private boolean advisoryForConsumed;
     private boolean sendAdvisoryIfNoConsumers;
     private boolean includeBodyForAdvisory;
+    //很多很多的统计信息的组合
     protected final DestinationStatistics destinationStatistics = new DestinationStatistics();
     protected final BrokerService brokerService;
     protected final Broker regionBroker;
     protected DeadLetterStrategy deadLetterStrategy = DEFAULT_DEAD_LETTER_STRATEGY;
+    //应该是检查消息过期的周期吧
     protected long expireMessagesPeriod = EXPIRE_MESSAGE_PERIOD;
+    //最大检查多少页吗
+    //好像是一页最多检查几个消息
     private int maxExpirePageSize = MAX_BROWSE_PAGE_SIZE;
     protected int cursorMemoryHighWaterMark = 70;
     protected int storeUsageHighWaterMark = 100;

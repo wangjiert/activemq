@@ -423,6 +423,7 @@ public class KahaDBStore extends MessageDatabase implements PersistenceAdapter, 
         //用于控制异步线程数的 信号量总大小就是上面的值
         //这里被当作锁在用 保证只有一个线程进行恢复统计数据
         private final Semaphore localDestinationSemaphore;
+        //里面放的应该是确认的消息回复吧
         protected final Set<String> ackedAndPrepared = new HashSet<>();
         protected final Set<String> rolledBackAcks = new HashSet<>();
 
@@ -726,6 +727,7 @@ public class KahaDBStore extends MessageDatabase implements PersistenceAdapter, 
 
 
         @Override
+        //在干什么 看起来像是在重置消息的消费偏移量
         public void resetBatching() {
             if (pageFile.isLoaded()) {
                 indexLock.writeLock().lock();
@@ -814,6 +816,7 @@ public class KahaDBStore extends MessageDatabase implements PersistenceAdapter, 
 
         @Override
         //恢复统计数据
+        //统计了消息的个数以及消息的大小
         protected void recoverMessageStoreStatistics() throws IOException {
             try {
                 MessageStoreStatistics recoveredStatistics;
@@ -829,13 +832,16 @@ public class KahaDBStore extends MessageDatabase implements PersistenceAdapter, 
                             // Iterate through all index entries to get the size of each message
                             StoredDestination sd = getStoredDestination(dest, tx);
                             for (Iterator<Entry<Location, Long>> iterator = sd.locationIndex.iterator(tx); iterator.hasNext();) {
+                                //这个数据的大小 包括头
                                 int locationSize = iterator.next().getKey().getSize();
                                 statistics.getMessageCount().increment();
+                                //这个也记录了消息的个数了的 和上面不重复吗
                                 statistics.getMessageSize().addSize(locationSize > 0 ? locationSize : 0);
                             }
                            return statistics;
                         }
                     });
+                    //在刚启动的时候应该是0吧
                     recoveredStatistics.getMessageCount().subtract(ackedAndPrepared.size());
                     getMessageStoreStatistics().getMessageCount().setCount(recoveredStatistics.getMessageCount().getCount());
                     getMessageStoreStatistics().getMessageSize().setTotalSize(recoveredStatistics.getMessageSize().getTotalSize());
@@ -843,6 +849,8 @@ public class KahaDBStore extends MessageDatabase implements PersistenceAdapter, 
                     indexLock.writeLock().unlock();
                 }
             } finally {
+                //释不释放有什么影响呢
+                //前面可能根本没有获得信号量 这里直接释放 有没有影响呢
                 unlockAsyncJobQueue();
             }
         }

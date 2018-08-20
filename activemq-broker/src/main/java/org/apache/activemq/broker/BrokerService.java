@@ -151,6 +151,8 @@ public class BrokerService implements Service {
 
     private boolean useJmx = true;
     private boolean enableStatistics = true;
+    //这是个啥 表示缓存是否支持持久化存储的意思吗
+    //创建tmpdatastore的时候好像有用到这个变量
     private boolean persistent = true;
     private boolean populateJMSXUserID;
     private boolean useAuthenticatedPrincipalForJMSXUserID;
@@ -1770,12 +1772,15 @@ public class BrokerService implements Service {
      */
     public synchronized PListStore getTempDataStore() {
         if (tempDataStore == null) {
+            //不支持持久化的话就直接返回null
             if (!isPersistent()) {
                 return null;
             }
 
             try {
+                //还是kahadb
                 PersistenceAdapter pa = getPersistenceAdapter();
+                //不满足这个条件
                 if( pa!=null && pa instanceof PListStore) {
                     return (PListStore) pa;
                 }
@@ -1787,6 +1792,7 @@ public class BrokerService implements Service {
                 String clazz = "org.apache.activemq.store.kahadb.plist.PListStoreImpl";
                 this.tempDataStore = (PListStore) getClass().getClassLoader().loadClass(clazz).newInstance();
                 this.tempDataStore.setDirectory(getTmpDataDirectory());
+                //我的天 这不是spring做的事吗 这相当于手动做了一次
                 configureService(tempDataStore);
             } catch (ClassNotFoundException e) {
                 throw new RuntimeException("Kahadb class PListStoreImpl not found. Add activemq-kahadb jar or set persistent to false on BrokerService.", e);

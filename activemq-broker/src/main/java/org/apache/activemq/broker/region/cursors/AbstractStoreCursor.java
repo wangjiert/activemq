@@ -44,6 +44,7 @@ public abstract class AbstractStoreCursor extends AbstractPendingMessageCursor i
     protected final PendingList batchList;
     private Iterator<MessageReference> iterator = null;
     protected boolean batchResetNeeded = false;
+    //消息的个数
     protected int size;
     private final LinkedList<MessageId> pendingCachedIds = new LinkedList<>();
     private static int SYNC_ADD = 0;
@@ -69,11 +70,14 @@ public abstract class AbstractStoreCursor extends AbstractPendingMessageCursor i
         if (!isStarted()) {
             super.start();
             resetBatch();
+            //设置消息的个数为统计对象的统计值
             resetSize();
+            //为什么一定要size为0才可以呢 万一是重启了呢 难道是重启之后统计对象还没有重新统计吗
             setCacheEnabled(size==0&&useCache);
         }
     }
 
+    //居然不是重置为0 这相当于校正啊 统计对象的消息个数肯定是对的啊
     protected void resetSize() {
         this.size = getStoreSize();
     }

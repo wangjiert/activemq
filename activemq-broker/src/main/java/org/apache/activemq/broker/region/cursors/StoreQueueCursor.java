@@ -33,6 +33,7 @@ public class StoreQueueCursor extends AbstractPendingMessageCursor {
     private static final Logger LOG = LoggerFactory.getLogger(StoreQueueCursor.class);
     private final Broker broker;
     //明明取的是两个cursor的和
+    //说明两个消息获取对象中的消息不是重叠的
     private int pendingCount;
     private final Queue queue;
     //感觉这个是放在内存中的消息缓冲
@@ -74,7 +75,9 @@ public class StoreQueueCursor extends AbstractPendingMessageCursor {
             nonPersistent.setMaxAuditDepth(getMaxAuditDepth());
             nonPersistent.setMaxProducersToAudit(getMaxProducersToAudit());
         }
+        //两个存储用用一个审计对象
         nonPersistent.setMessageAudit(getMessageAudit());
+        //就是添加一个监听器吗
         nonPersistent.start();
         persistent.setMessageAudit(getMessageAudit());
         persistent.start();

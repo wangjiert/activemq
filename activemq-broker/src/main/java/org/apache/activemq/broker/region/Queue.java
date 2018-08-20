@@ -123,6 +123,7 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
     //数据是什么时候从主存进入这个里面的
     protected PendingMessageCursor messages;
     private final ReentrantReadWriteLock pagedInMessagesLock = new ReentrantReadWriteLock();
+    //已经读入的消息
     private final PendingList pagedInMessages = new OrderedPendingList();
     // Messages that are paged in but have not yet been targeted at a subscription
     private final ReentrantReadWriteLock pagedInPendingDispatchLock = new ReentrantReadWriteLock();
@@ -172,6 +173,8 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
         @Override
         public void run() {
             if (expiryTaskInProgress.compareAndSet(false, true)) {
+                //什么鬼 定时任务调这个方法  然后这个方法使用线程池执行任务
+                //定时任务就是在异步线程里工作的 为什么还要放到线程池里
                 taskFactory.execute(expireMessagesWork);
             }
         }
@@ -411,6 +414,7 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
         //线程池的实现里面没有启动 每次新启线程的跑起来了
         this.taskRunner = taskFactory.createTaskRunner(this, "Queue:" + destination.getPhysicalName());
 
+        //就设置了内存管理对象
         super.initialize();
         if (store != null) {
             // Restore the persistent messages.
@@ -420,8 +424,11 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
             messages.setMaxProducersToAudit(getMaxProducersToAudit());
             messages.setUseCache(isUseCache());
             messages.setMemoryUsageHighWaterMark(getCursorMemoryHighWaterMark());
+            //只是恢复了一下消息统计信息而已
             store.start();
+            //持久化存储里面有多少条消息没有被消费
             final int messageCount = store.getMessageCount();
+            //如果是队列的话不需要回复  持久化的主题订阅需要回复
             if (messageCount > 0 && messages.isRecoveryRequired()) {
                 BatchMessageRecoveryListener listener = new BatchMessageRecoveryListener(messageCount);
                 do {
@@ -430,6 +437,7 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
                    listener.processExpired();
                } while (!listener.done());
             } else {
+                //统计这么多干什么 其他的统计对象已经统计过了啊
                 destinationStatistics.getMessages().add(messageCount);
             }
         }
@@ -1062,8 +1070,13 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
                 systemUsage.getStoreUsage().start();
             }
             systemUsage.getMemoryUsage().addUsageListener(this);
+            //自己就有一个持久化和非持久化的存储对象 持久化的存储又有一个持久化的和非持久化的存储
+            //并且他们的持久化存储和非持久化存储之间还不重叠 需要好好研究一下
             messages.start();
             if (getExpireMessagesPeriod() > 0) {
+                //不会扫描log文件吧
+                //一个定时对象只对应一个后台线程 所以不应该执行耗时任务
+                //这里的定时任务执行的时候会调线程池去执行任务
                 scheduler.executePeriodically(expireMessagesTask, getExpireMessagesPeriod());
             }
             doPageIn(false);
@@ -1221,6 +1234,7 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
             if (max > 0) {
                 messagesLock.readLock().lock();
                 try {
+                    //这个是什么逻辑
                     maxPageInAttempts += (messages.size() / max);
                 } finally {
                     messagesLock.readLock().unlock();

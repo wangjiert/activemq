@@ -48,6 +48,7 @@ public abstract class Usage<T extends Usage> implements Service {
 
     private UsageCapacity limiter = new DefaultUsageCapacity();
     private int percentUsageMinDelta = 1;
+    //内存管理的使用对象中 这个监听器是queue对象实现的
     private final List<UsageListener> listeners = new CopyOnWriteArrayList<UsageListener>();
     private final boolean debug = LOG.isDebugEnabled();
     private float usagePortion = 1.0f;
@@ -331,9 +332,11 @@ public abstract class Usage<T extends Usage> implements Service {
 
     @Override
     @SuppressWarnings("unchecked")
+    //就是把自己加到parent里面 启动所有的children应该没什么用吧
     public void start() {
         if (started.compareAndSet(false, true)) {
             if (parent != null) {
+                //parent为什么要启动自己 明明自己在启动的时候调的方法
                 parent.addChild(this);
                 if (getLimit() > parent.getLimit()) {
                     LOG.info("Usage({}) limit={} should be smaller than its parent limit={}", new Object[] { getName(), getLimit(), parent.getLimit() });

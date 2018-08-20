@@ -50,6 +50,7 @@ public abstract class AbstractPendingMessageCursor implements PendingMessageCurs
     //额 这个条件就是用上一个条件加额外条件进行判断的
     protected boolean cacheEnabled=true;
     protected boolean started=false;
+    //表示最后处理的消息吧
     protected MessageReference last = null;
     //是否支持优先级吧
     protected final boolean prioritizedMessages;

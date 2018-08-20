@@ -41,6 +41,7 @@ public class ConsumerInfo extends BaseCommand implements TransientInitializer {
 
     protected ConsumerId consumerId;
     protected ActiveMQDestination destination;
+    //没收到回复之前 预先获取的数据数量
     protected int prefetchSize;
     protected int maximumPendingMessageLimit;
     protected boolean browser;

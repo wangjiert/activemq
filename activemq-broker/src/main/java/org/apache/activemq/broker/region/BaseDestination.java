@@ -80,6 +80,7 @@ public abstract class BaseDestination implements Destination {
     private int maxBrowsePageSize = MAX_BROWSE_PAGE_SIZE;
     private boolean useCache = true;
     private int minimumMessageSize = 1024;
+    //懒惰发布是个什么鬼呢
     private boolean lazyDispatch = false;
     private boolean advisoryForSlowConsumers;
     private boolean advisoryForFastProducers;

@@ -40,6 +40,9 @@ public class StoreQueueCursor extends AbstractPendingMessageCursor {
     //下面初始化明明是放在文件中的 为什么要加non在变量前面 看来下面的应该就是在最终存放消息的地方
     private PendingMessageCursor nonPersistent;
     //这不是预取吗 难道说这个是放在持久化中的消息缓冲
+    //一个大胆的猜想 persistent是代表的磁盘上的消息  nonPersistent代表的是从磁盘上读取到内存中的消息
+    //至于为什么nonPersistent里面还分持久化的和非持久化的 应该是内存里过多之后为了节约内存把一部分消息写到了文件中
+    //至于为什么这两个持久化与非持久化之间能够做到不重叠 暂时还没想到
     private final QueueStorePrefetch persistent;
     //这个是综合上面两个的吗
     //取消息的时候首先是从这里取的

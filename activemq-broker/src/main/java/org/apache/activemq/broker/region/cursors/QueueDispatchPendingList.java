@@ -37,7 +37,9 @@ import org.apache.activemq.command.MessageId;
  */
 public class QueueDispatchPendingList implements PendingList {
 
+    //应该是读到缓存中的消息
     private PendingList pagedInPendingDispatch = new OrderedPendingList();
+    //应该是重发只后等待消费的消息
     private PendingList redeliveredWaitingDispatch = new OrderedPendingList();
     private boolean prioritized = false;
 

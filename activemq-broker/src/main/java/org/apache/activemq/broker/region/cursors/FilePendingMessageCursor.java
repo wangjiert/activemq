@@ -65,8 +65,10 @@ public class FilePendingMessageCursor extends AbstractPendingMessageCursor imple
     //这个东西应该是直接和store相关的
     private PList diskList;
     //获取消息最重要的对象
+    //专门用于获取消息的迭代器
     private Iterator<MessageReference> iter;
     private Destination regionDestination;
+    //表示正在运行吗
     private boolean iterating;
     private boolean flushRequired;
     private final AtomicBoolean started = new AtomicBoolean();
@@ -140,13 +142,16 @@ public class FilePendingMessageCursor extends AbstractPendingMessageCursor imple
      * reset the cursor
      */
     @Override
+    //重置游标
     //状态设为正在运行
     public synchronized void reset() {
         iterating = true;
         last = null;
+        //也就是没有从磁盘中读取消息出来
+        //直接从内存里面取
         if (isDiskListEmpty()) {
             this.iter = this.memoryList.iterator();
-        } else {
+        } else {//从磁盘里面读取消息
             this.iter = new DiskIterator();
         }
     }

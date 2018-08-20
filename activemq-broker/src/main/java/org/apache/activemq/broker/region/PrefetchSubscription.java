@@ -55,6 +55,8 @@ public abstract class PrefetchSubscription extends AbstractSubscription {
     protected final Scheduler scheduler;
 
     protected PendingMessageCursor pending;
+    //已经发送的消息吧
+    //应该是还没有确认的
     protected final List<MessageReference> dispatched = new ArrayList<MessageReference>();
     private int maxProducersToAudit=32;
     private int maxAuditDepth=2048;
@@ -528,6 +530,7 @@ public abstract class PrefetchSubscription extends AbstractSubscription {
     }
 
     @Override
+    //应该是算出还需要多少条消息才满
     public int countBeforeFull() {
         return getPrefetchSize() == 0 ? prefetchExtension.get() : info.getPrefetchSize() + prefetchExtension.get() - dispatched.size();
     }

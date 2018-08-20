@@ -50,6 +50,7 @@ public abstract class AbstractSubscription implements Subscription {
     protected ConsumerInfo info;
     protected final DestinationFilter destinationFilter;
     protected final CopyOnWriteArrayList<Destination> destinations = new CopyOnWriteArrayList<Destination>();
+    //这应该是在预取数量之外额外需要获取的数量吧
     protected final AtomicInteger prefetchExtension = new AtomicInteger(0);
 
     private boolean usePrefetchExtension = true;

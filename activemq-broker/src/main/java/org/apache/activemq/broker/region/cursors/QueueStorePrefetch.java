@@ -124,6 +124,7 @@ class QueueStorePrefetch extends AbstractStoreCursor {
 
     @Override
     protected void doFillBatch() throws Exception {
+        //内存是否还够
         hadSpace = this.hasSpace();
         if (!broker.getBrokerService().isPersistent() || hadSpace) {
             this.store.recoverNextMessages(this.maxBatchSize, this);

@@ -2308,6 +2308,7 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
         MessageOrderIndex orderIndex = new MessageOrderIndex();
         //值好像是内部使用的消息编号 每个地址自己内部的编号独立
         BTreeIndex<Location, Long> locationIndex;
+        //消息id是key 内部消息id是值
         BTreeIndex<String, Long> messageIdIndex;
 
         // These bits are only set for Topics

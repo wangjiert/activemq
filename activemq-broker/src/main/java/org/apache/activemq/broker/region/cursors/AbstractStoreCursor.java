@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
 public abstract class AbstractStoreCursor extends AbstractPendingMessageCursor implements MessageRecoveryListener {
     private static final Logger LOG = LoggerFactory.getLogger(AbstractStoreCursor.class);
     protected final Destination regionDestination;
+    //已经读出来的消息吗
     protected final PendingList batchList;
     private Iterator<MessageReference> iterator = null;
     protected boolean batchResetNeeded = false;
@@ -462,7 +463,9 @@ public abstract class AbstractStoreCursor extends AbstractPendingMessageCursor i
             LOG.trace("{} fillBatch", this);
         }
         if (batchResetNeeded) {
+            //重新读取一下size
             resetSize();
+            //这个是设置一次读取多少吗
             setMaxBatchSize(Math.min(regionDestination.getMaxPageSize(), size));
             resetBatch();
             this.batchResetNeeded = false;

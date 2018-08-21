@@ -37,6 +37,7 @@ public class ListIndex<Key,Value> implements Index<Key,Value> {
     private static final Logger LOG = LoggerFactory.getLogger(ListIndex.class);
     public  final static long NOT_SET = -1;
     protected PageFile pageFile;
+    //起始id
     protected long headPageId;
     protected long tailPageId;
     private AtomicLong size = new AtomicLong(0);

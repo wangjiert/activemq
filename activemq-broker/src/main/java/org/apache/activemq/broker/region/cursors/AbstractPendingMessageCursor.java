@@ -51,6 +51,7 @@ public abstract class AbstractPendingMessageCursor implements PendingMessageCurs
     protected boolean cacheEnabled=true;
     protected boolean started=false;
     //表示最后处理的消息吧
+    //上一个处理的消息吧
     protected MessageReference last = null;
     //是否支持优先级吧
     protected final boolean prioritizedMessages;

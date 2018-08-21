@@ -425,6 +425,7 @@ public class KahaDBStore extends MessageDatabase implements PersistenceAdapter, 
         private final Semaphore localDestinationSemaphore;
         //里面放的应该是确认的消息回复吧
         protected final Set<String> ackedAndPrepared = new HashSet<>();
+        //消息回滚的确认吗 里面放的应该是消息id
         protected final Set<String> rolledBackAcks = new HashSet<>();
 
         double doneTasks, canceledTasks = 0;
@@ -679,6 +680,7 @@ public class KahaDBStore extends MessageDatabase implements PersistenceAdapter, 
                     public void execute(Transaction tx) throws Exception {
                         StoredDestination sd = getStoredDestination(dest, tx);
                         Entry<Long, MessageKeys> entry = null;
+                        //像是在恢复事务回滚啊
                         int counter = recoverRolledBackAcks(sd, tx, maxReturned, listener);
                         for (Iterator<Entry<Long, MessageKeys>> iterator = sd.orderIndex.iterator(tx); iterator.hasNext(); ) {
                             entry = iterator.next();
@@ -707,8 +709,10 @@ public class KahaDBStore extends MessageDatabase implements PersistenceAdapter, 
             for (Iterator<String> iterator = rolledBackAcks.iterator(); iterator.hasNext(); ) {
                 id = iterator.next();
                 iterator.remove();
+                //得到内部id
                 Long sequence = sd.messageIdIndex.get(tx, id);
                 if (sequence != null) {
+                    //这个消息已经被读出来过
                     if (sd.orderIndex.alreadyDispatched(sequence)) {
                         listener.recoverMessage(loadMessage(sd.orderIndex.get(tx, sequence).location));
                         counter++;

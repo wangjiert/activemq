@@ -1233,6 +1233,7 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
         return browseList.toArray(new Message[browseList.size()]);
     }
 
+    //找出生存超时的消息  max是否是表示做多找到多少个呢
     public void doBrowse(List<Message> browseList, int max) {
         final ConnectionContext connectionContext = createConnectionContext();
         try {

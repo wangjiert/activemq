@@ -687,6 +687,7 @@ public class KahaDBStore extends MessageDatabase implements PersistenceAdapter, 
                             if (ackedAndPrepared.contains(entry.getValue().messageId)) {
                                 continue;
                             }
+                            //从数据文件中把message读取出来
                             Message msg = loadMessage(entry.getValue().location);
                             msg.getMessageId().setFutureOrSequenceLong(entry.getKey());
                             listener.recoverMessage(msg);
@@ -1355,6 +1356,7 @@ public class KahaDBStore extends MessageDatabase implements PersistenceAdapter, 
      * @return
      * @throws IOException
      */
+    //通过location直接在数据文件中读取消息
     Message loadMessage(Location location) throws IOException {
         try {
             JournalCommand<?> command = load(location);

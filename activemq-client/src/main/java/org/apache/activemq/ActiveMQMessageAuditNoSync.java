@@ -40,6 +40,7 @@ public class ActiveMQMessageAuditNoSync implements Serializable {
     private int auditDepth;
     private int maximumNumberOfProducersToTrack;
     private final LRUCache<String, BitArrayBin> map;
+    //map新加了东西之后就会设为true
     private transient boolean modified = true;
 
     /**
@@ -157,6 +158,7 @@ public class ActiveMQMessageAuditNoSync implements Serializable {
      * @param id
      * @return true if the message is a duplicate
      */
+    //表示这个id是否用过
     public boolean isDuplicate(final MessageId id) {
         boolean answer = false;
 

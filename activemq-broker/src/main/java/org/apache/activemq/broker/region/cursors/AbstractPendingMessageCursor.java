@@ -356,6 +356,7 @@ public abstract class AbstractPendingMessageCursor implements PendingMessageCurs
      * @param messageId
      * @return true if id is unique, false otherwise.
      */
+    //记录消息id是否是唯一的
     public synchronized boolean recordUniqueId(MessageId messageId) {
         if (!enableAudit || audit==null) {
             return true;

@@ -93,6 +93,7 @@ public abstract class Message extends BaseCommand implements MarshallAware, Mess
     protected boolean droppable;
     protected boolean jmsXGroupFirstForConsumer;
 
+    //消息引用计数有什么用
     private transient short referenceCount;
     private transient ActiveMQConnection connection;
     transient MessageDestination regionDestination;

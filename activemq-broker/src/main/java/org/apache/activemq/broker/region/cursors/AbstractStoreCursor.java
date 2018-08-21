@@ -112,7 +112,9 @@ public abstract class AbstractStoreCursor extends AbstractPendingMessageCursor i
     public synchronized boolean recoverMessage(Message message, boolean cached) throws Exception {
         boolean recovered = false;
         message.setRegionDestination(regionDestination);
+        //表示消息之前还没有被用过
         if (recordUniqueId(message.getMessageId())) {
+            //是否缓存表示是否设置内存的使用
             if (!cached) {
                 if( message.getMemoryUsage()==null ) {
                     message.setMemoryUsage(this.getSystemUsage().getMemoryUsage());

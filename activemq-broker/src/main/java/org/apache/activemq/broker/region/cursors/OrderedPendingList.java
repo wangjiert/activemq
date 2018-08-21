@@ -29,6 +29,7 @@ import org.apache.activemq.management.SizeStatisticImpl;
 
 public class OrderedPendingList implements PendingList {
 
+    //链表结构吗
     private PendingNode root = null;
     private PendingNode tail = null;
     private final Map<MessageId, PendingNode> map = new HashMap<MessageId, PendingNode>();

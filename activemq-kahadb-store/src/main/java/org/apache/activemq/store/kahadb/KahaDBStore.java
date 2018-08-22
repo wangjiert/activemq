@@ -672,6 +672,7 @@ public class KahaDBStore extends MessageDatabase implements PersistenceAdapter, 
         }
 
         @Override
+        //这个方法感觉就是在读取多少条数据进入persistent缓存呀
         public void recoverNextMessages(final int maxReturned, final MessageRecoveryListener listener) throws Exception {
             indexLock.writeLock().lock();
             try {
@@ -681,17 +682,23 @@ public class KahaDBStore extends MessageDatabase implements PersistenceAdapter, 
                         StoredDestination sd = getStoredDestination(dest, tx);
                         Entry<Long, MessageKeys> entry = null;
                         //像是在恢复事务回滚啊
+                        //返回值应该表示的是已经有多少条消息已经是可以直接用的了
                         int counter = recoverRolledBackAcks(sd, tx, maxReturned, listener);
                         for (Iterator<Entry<Long, MessageKeys>> iterator = sd.orderIndex.iterator(tx); iterator.hasNext(); ) {
                             entry = iterator.next();
+                            //从这里的逻辑看呢 消息从index中读取之后 并没有直接删掉
+                            //消息确认之后应该也是先放在这个集合里 然后有个线程专门针对这个集合去删index吗
                             if (ackedAndPrepared.contains(entry.getValue().messageId)) {
                                 continue;
                             }
                             //从数据文件中把message读取出来
                             Message msg = loadMessage(entry.getValue().location);
                             msg.getMessageId().setFutureOrSequenceLong(entry.getKey());
+                            //还没完全明白这个方法在干什么
                             listener.recoverMessage(msg);
+                            //可以看的出来 这个变量就是记录的有多少个消息
                             counter++;
+                            //这里是处理了消息提前达到需求的情况 也就是消息不够的只是返回现有的那么多
                             if (counter >= maxReturned) {
                                 break;
                             }
@@ -714,6 +721,7 @@ public class KahaDBStore extends MessageDatabase implements PersistenceAdapter, 
                 Long sequence = sd.messageIdIndex.get(tx, id);
                 if (sequence != null) {
                     //这个消息已经被读出来过
+                    //如果一个消息都还没有被读出来 怎么还能够roll back的
                     if (sd.orderIndex.alreadyDispatched(sequence)) {
                         listener.recoverMessage(loadMessage(sd.orderIndex.get(tx, sequence).location));
                         counter++;

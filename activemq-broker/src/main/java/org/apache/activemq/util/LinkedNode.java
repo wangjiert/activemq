@@ -26,6 +26,7 @@ public class LinkedNode {
 
     protected LinkedNode next = this;
     protected LinkedNode prev = this;
+    //代表是否已经是链表的尾部
     protected boolean tail = true;
 
     public LinkedNode getHeadNode() {
@@ -81,6 +82,7 @@ public class LinkedNode {
         if (rightHead == this) {
             throw new IllegalArgumentException("You cannot link to yourself");
         }
+        //看来这个链表是首尾相连的啊
         if (!rightHead.isHeadNode()) {
             throw new IllegalArgumentException("You only insert nodes that are the first in a list");
         }

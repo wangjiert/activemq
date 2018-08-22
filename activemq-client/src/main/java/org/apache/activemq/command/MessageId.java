@@ -39,6 +39,9 @@ public class MessageId implements DataStructure, Comparable<MessageId> {
     private transient AtomicReference<Object> dataLocator = new AtomicReference<Object>();
     private transient Object entryLocator;
     private transient Object plistLocator;
+    //现在看来这个变量类型是long记录了消息在kahadb内部的id
+    //通过名字判断呢 这个变量类型应该不止一种 future这个东西感觉是记录了某个异步调用的返回值 还需要在以后的代码中仔细观察
+    //从文件里读出来之后会自动把分配的序列号赋值给这个变量
     private transient Object futureOrSequenceLong;
 
     public MessageId() {

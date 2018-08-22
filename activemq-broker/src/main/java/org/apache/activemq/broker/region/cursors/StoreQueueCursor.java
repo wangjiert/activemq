@@ -34,6 +34,7 @@ public class StoreQueueCursor extends AbstractPendingMessageCursor {
     private final Broker broker;
     //明明取的是两个cursor的和
     //说明两个消息获取对象中的消息不是重叠的
+    //直接访问这个变量就可以知道还有多少条消息可以读
     private int pendingCount;
     private final Queue queue;
     //感觉这个是放在内存中的消息缓冲

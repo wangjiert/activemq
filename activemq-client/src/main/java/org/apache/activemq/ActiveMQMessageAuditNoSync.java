@@ -39,6 +39,7 @@ public class ActiveMQMessageAuditNoSync implements Serializable {
     public static final int MAXIMUM_PRODUCER_COUNT = 64;
     private int auditDepth;
     private int maximumNumberOfProducersToTrack;
+    //什么时候记录的呢
     private final LRUCache<String, BitArrayBin> map;
     //map新加了东西之后就会设为true
     private transient boolean modified = true;

@@ -42,6 +42,7 @@ public abstract class AbstractStoreCursor extends AbstractPendingMessageCursor i
     private static final Logger LOG = LoggerFactory.getLogger(AbstractStoreCursor.class);
     protected final Destination regionDestination;
     //已经读出来的消息吗
+    //看来消息应该首先从这里面拿
     protected final PendingList batchList;
     private Iterator<MessageReference> iterator = null;
     protected boolean batchResetNeeded = false;
@@ -109,10 +110,17 @@ public abstract class AbstractStoreCursor extends AbstractPendingMessageCursor i
         return recoverMessage(message,false);
     }
 
+    //这个cached表示的是什么 看起来不像是表示是否缓存这个消息 更像是这个消息之前是否已经缓存了 处理topic的时候会传true
+    //是不是可以认为cached表示的是这个消息是属于queue还是topic的呢
+    //看着还是很像的 topic就是需要把消息存起来用于记录对应的订阅是否已经获得了这个消息 而queue不需要记录 只要被拿了就是消息完了
+    //返回值有代表了什么呢 感觉并不是很关心的样子啊
+    //看这个方法的名字 这段代码应该在恢复消息 返回值表示是否恢复成功
+    //是不是只要消息从文件里读出来 就会调用这个方法呢 目前看来在两个地方调用过
     public synchronized boolean recoverMessage(Message message, boolean cached) throws Exception {
         boolean recovered = false;
         message.setRegionDestination(regionDestination);
         //表示消息之前还没有被用过
+        //感觉这个逻辑要是判断不过的话 消息就不可能被恢复
         if (recordUniqueId(message.getMessageId())) {
             //是否缓存表示是否设置内存的使用
             if (!cached) {
@@ -120,7 +128,9 @@ public abstract class AbstractStoreCursor extends AbstractPendingMessageCursor i
                     message.setMemoryUsage(this.getSystemUsage().getMemoryUsage());
                 }
             }
+            //引用计算的类似功能吗
             message.incrementReferenceCount();
+            //加到链表的后面
             batchList.addMessageLast(message);
             clearIterator(true);
             recovered = true;
@@ -165,13 +175,17 @@ public abstract class AbstractStoreCursor extends AbstractPendingMessageCursor i
     }
 
     // track for processing outside of store index lock so we can dlq
+    //记录了所有的消息
     final LinkedList<Message> duplicatesFromStore = new LinkedList<Message>();
     private void duplicate(Message message) {
         duplicatesFromStore.add(message);
     }
 
     void dealWithDuplicates() {
+        //看恢复消息的时候好像是没有进入可以直接读的集合的消息进入了这个集合 所以说进入这个集合的消息都是重复的
         for (Message message : duplicatesFromStore) {
+            //目前看的是queue 订阅者返回的是空
+            //这个方法会删除消息
             regionDestination.duplicateFromStore(message, getSubscription());
         }
         duplicatesFromStore.clear();

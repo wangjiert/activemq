@@ -903,6 +903,8 @@ public abstract class BaseDestination implements Destination {
         getLog().warn("duplicate message from store {}, redirecting for dlq processing", message.getMessageId());
         Throwable cause = new Throwable("duplicate from store for " + destination);
         message.setRegionDestination(this);
+        //这不是重复消息吗 怎么进入死信通道呢
+        //进入死信的判断条件挺多啊
         broker.getRoot().sendToDeadLetterQueue(connectionContext, message, null, cause);
         MessageAck messageAck = new MessageAck(message, MessageAck.POSION_ACK_TYPE, 1);
         messageAck.setPoisonCause(cause);

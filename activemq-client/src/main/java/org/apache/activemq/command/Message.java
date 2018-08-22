@@ -89,13 +89,17 @@ public abstract class Message extends BaseCommand implements MarshallAware, Mess
     protected Map<String, Object> properties;
     protected boolean readOnlyProperties;
     protected boolean readOnlyBody;
+    //记录的信息真是多啊 发送的时候感觉就设置了一个内容而已
+    //这个消息都是不能持久化的属性 那就是收到这个消息之后自己设置的呗
     protected transient boolean recievedByDFBridge;
     protected boolean droppable;
     protected boolean jmsXGroupFirstForConsumer;
 
     //消息引用计数有什么用
+    //总感觉这个东西是topic里面才有用的
     private transient short referenceCount;
     private transient ActiveMQConnection connection;
+    //目前看来好像消息从文件里读出来之后就会设置下面两个变量
     transient MessageDestination regionDestination;
     transient MemoryUsage memoryUsage;
     transient AtomicBoolean processAsExpired = new AtomicBoolean(false);

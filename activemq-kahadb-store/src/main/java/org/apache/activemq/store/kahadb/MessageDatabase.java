@@ -3514,6 +3514,7 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
         //应该和数据库中的游标功能一样吧
         final MessageOrderCursor cursor = new MessageOrderCursor();
         //这个难道是不是记录的下一个消息的内部id吗
+        //看来这个很可能为空啊 停止迭代的时候会把下面三个变量设为空然后把实际记录的值赋值给cursor
         Long lastDefaultKey;
         Long lastHighKey;
         Long lastLowKey;

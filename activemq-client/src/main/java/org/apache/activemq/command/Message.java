@@ -58,6 +58,7 @@ public abstract class Message extends BaseCommand implements MarshallAware, Mess
     protected ActiveMQDestination originalDestination;
     protected TransactionId originalTransactionId;
 
+    //生产者id
     protected ProducerId producerId;
     protected ActiveMQDestination destination;
     protected TransactionId transactionId;

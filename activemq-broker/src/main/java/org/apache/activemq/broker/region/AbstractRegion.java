@@ -542,6 +542,7 @@ public abstract class AbstractRegion implements Region {
     }
 
     @Override
+    //从这里并没有看出来确认队列消息和主题消息的区别
     public void acknowledge(ConsumerBrokerExchange consumerExchange, MessageAck ack) throws Exception {
         Subscription sub = consumerExchange.getSubscription();
         if (sub == null) {

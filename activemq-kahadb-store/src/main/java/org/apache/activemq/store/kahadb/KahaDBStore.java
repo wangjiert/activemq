@@ -1322,6 +1322,7 @@ public class KahaDBStore extends MessageDatabase implements PersistenceAdapter, 
     public long getLastProducerSequenceId(ProducerId id) {
         indexLock.writeLock().lock();
         try {
+            //可能会由于缓存过多而返回-1
             return metadata.producerSequenceIdTracker.getLastSeqId(id);
         } finally {
             indexLock.writeLock().unlock();

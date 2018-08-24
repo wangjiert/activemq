@@ -918,12 +918,14 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
         }
     }
 
+    //处理消息发送的核心代码
     void doMessageSend(final ProducerBrokerExchange producerExchange, final Message message) throws IOException,
             Exception {
         final ConnectionContext context = producerExchange.getConnectionContext();
         ListenableFuture<Object> result = null;
 
         producerExchange.incrementSend();
+        //应该消息确认加进去之后会减一吧
         pendingSends.incrementAndGet();
         do {
             //应该是阻塞到有空间为止

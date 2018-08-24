@@ -516,6 +516,7 @@ public class RegionBroker extends EmptyBroker {
             ActiveMQDestination destination = ack.getDestination();
             consumerExchange.setRegion(getRegion(destination));
         }
+        //所有同类型的地址对应同一个region
         consumerExchange.getRegion().acknowledge(consumerExchange, ack);
     }
 

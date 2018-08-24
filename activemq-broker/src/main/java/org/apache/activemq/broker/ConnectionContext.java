@@ -56,6 +56,7 @@ public class ConnectionContext {
     private Object longTermStoreContext;
     private boolean producerFlowControl = true;
     private MessageAuthorizationPolicy messageAuthorizationPolicy;
+    //是不是网络连接
     private boolean networkConnection;
     private boolean faultTolerant;
     private final AtomicBoolean stopping = new AtomicBoolean();

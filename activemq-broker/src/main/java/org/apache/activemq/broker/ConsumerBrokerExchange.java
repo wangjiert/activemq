@@ -25,12 +25,15 @@ import org.apache.activemq.broker.region.Subscription;
  * 
  * 
  */
+//这个类有什么用 感觉就是把集合变量组合起来
 public class ConsumerBrokerExchange {
 
     private ConnectionContext connectionContext;
     private Destination regionDestination;
+    //如果它是通配符的 这个值会被替换成具体的region
     private Region region;
     private Subscription subscription;
+    //代表这个地址是不是通配符的吗
     private boolean wildcard;
 
     /**

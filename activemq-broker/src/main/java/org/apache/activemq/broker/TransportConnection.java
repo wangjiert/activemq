@@ -150,6 +150,7 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
     private final Map<ProducerId, ProducerBrokerExchange> producerExchanges = new HashMap<>();
     private final Map<ConsumerId, ConsumerBrokerExchange> consumerExchanges = new HashMap<>();
     private final CountDownLatch dispatchStoppedLatch = new CountDownLatch(1);
+    //这个是会变的
     private ConnectionContext context;
     private boolean networkConnection;
     private boolean faultTolerantConnection;
@@ -580,6 +581,7 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
     }
 
     @Override
+    //消费确认
     public Response processMessageAck(MessageAck ack) throws Exception {
         ConsumerBrokerExchange consumerExchange = getConsumerBrokerExchange(ack.getConsumerId());
         if (consumerExchange != null) {
@@ -1578,14 +1580,22 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
         return result;
     }
 
+    //得到一个综合几个变量的变量
+    //每个生产者对应一个这个对象
+    //transportconnection是每个连接对应一个 一个连接可能会创建多个生产者 所以说这里会有几何来缓存这个对象和生产者的对应关系
     private ProducerBrokerExchange getProducerBrokerExchange(ProducerId id) throws IOException {
         ProducerBrokerExchange result = producerExchanges.get(id);
         if (result == null) {
             synchronized (producerExchanges) {
+                //构造函数没做什么事 看来那些变量都是后来手动设置的
                 result = new ProducerBrokerExchange();
+                //连接状态和连接是一对一的关系
                 TransportConnectionState state = lookupConnectionState(id);
+                //获取连接上下文
+                //添加连接的时候会把连接上下文对象放进缓存
                 context = state.getContext();
                 result.setConnectionContext(context);
+                //
                 if (context.isReconnect() || (context.isNetworkConnection() && connector.isAuditNetworkProducers())) {
                     result.setLastStoredSequenceId(brokerService.getPersistenceAdapter().getLastProducerSequenceId(id));
                 }

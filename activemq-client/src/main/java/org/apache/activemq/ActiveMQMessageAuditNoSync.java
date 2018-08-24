@@ -294,6 +294,7 @@ public class ActiveMQMessageAuditNoSync implements Serializable {
 
     public long getLastSeqId(ProducerId id) {
         long result = -1;
+        //万一这个由于缓存太多被丢掉了呢
         BitArrayBin bab = map.get(id.toString());
         if (bab != null) {
             result = bab.getLastSetIndex();

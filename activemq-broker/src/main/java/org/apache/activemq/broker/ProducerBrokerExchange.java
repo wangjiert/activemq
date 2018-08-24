@@ -41,13 +41,16 @@ public class ProducerBrokerExchange {
     private Region region;
     private ProducerState producerState;
     //具体代表着什么呢 易变与否感觉像是内存和磁盘的区别一样
+    //好像是表示地址是否是会变的
     private boolean mutable = true;
     //记录了最后一次发送的消息的序列吧
+    //可能会由于缓存过多而被设置为-1
     private AtomicLong lastSendSequenceNumber = new AtomicLong(-1);
     //应该是表示是都记录生产者id吧
     private boolean auditProducerSequenceIds;
-    //
+    //是不是网络生产者
     private boolean isNetworkProducer;
+    //这个东西会有多个吗 目前就看到一个
     private BrokerService brokerService;
     private FlowControlInfo flowControlInfo = new FlowControlInfo();
 
@@ -187,6 +190,7 @@ public class ProducerBrokerExchange {
         return -1;
     }
 
+    //看下对-1的处理
     public void setLastStoredSequenceId(long l) {
         auditProducerSequenceIds = true;
         if (connectionContext.isNetworkConnection()) {
@@ -228,8 +232,10 @@ public class ProducerBrokerExchange {
     }
 
 
+    //这是来实现流控的吗
     public static class FlowControlInfo {
         private AtomicBoolean blockingOnFlowControl = new AtomicBoolean();
+        //发送了多少条消息
         private AtomicLong totalSends = new AtomicLong();
         private AtomicLong sendsBlocked = new AtomicLong();
         private AtomicLong totalTimeBlocked = new AtomicLong();

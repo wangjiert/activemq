@@ -847,8 +847,11 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
         }
     }
 
+    //应该就是更新游标吧
     private void doPendingCursorAdditions() throws Exception {
+        //用来记录所有的更新
         LinkedList<MessageContext> orderedUpdates = new LinkedList<>();
+        //一个可重入锁 发消息的时候也有锁住这个锁吗
         sendLock.lockInterruptibly();
         try {
             synchronized (indexOrderedCursorUpdates) {

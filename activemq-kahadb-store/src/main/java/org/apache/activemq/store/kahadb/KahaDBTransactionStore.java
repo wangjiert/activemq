@@ -171,6 +171,7 @@ public class KahaDBTransactionStore implements TransactionStore {
             }
 
             @Override
+            //nb呀 第三个参数直接就丢弃了
             public ListenableFuture<Object> asyncAddQueueMessage(ConnectionContext context, Message message, boolean canOptimize) throws IOException {
                 return KahaDBTransactionStore.this.asyncAddQueueMessage(context, getDelegate(), message);
             }
@@ -416,8 +417,11 @@ public class KahaDBTransactionStore implements TransactionStore {
         if (message.getTransactionId() != null) {
             if (message.getTransactionId().isXATransaction() || theStore.isConcurrentStoreAndDispatchTransactions() == false) {
                 destination.addMessage(context, message);
+                //怎么觉得这个没什么用呢
                 return AbstractMessageStore.FUTURE;
             } else {
+                //找一下这个集合在什么线程里面处理的
+                //哇哦猜错了 这个里面没有run或者start方法 可能是造别的类的启动方法里调了什么方法从这个集合里取的
                 Tx tx = getTx(message.getTransactionId());
                 tx.add(new AddMessageCommand(context) {
                     @Override

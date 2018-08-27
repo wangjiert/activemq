@@ -347,6 +347,7 @@ public class StoreQueueCursor extends AbstractPendingMessageCursor {
     }
 
     @Override
+    //只有三个同时是允许缓存的 才会返回true
     public boolean isCacheEnabled() {
         boolean cacheEnabled = isUseCache();
         if (cacheEnabled) {

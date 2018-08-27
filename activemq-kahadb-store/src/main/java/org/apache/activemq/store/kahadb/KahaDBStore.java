@@ -115,6 +115,7 @@ public class KahaDBStore extends MessageDatabase implements PersistenceAdapter, 
     // when true, message order may be compromised when cache is exhausted if store is out
     // or order w.r.t cache
     private boolean concurrentStoreAndDispatchTopics = false;
+    //感觉表示到是 这个事务是否支持并列到存储和分发
     private final boolean concurrentStoreAndDispatchTransactions = false;
     //最大的异步任务数 每个messagestore都用的这个值 看来不是用来控制整个系统的异步数的
     private int maxAsyncJobs = MAX_ASYNC_JOBS;

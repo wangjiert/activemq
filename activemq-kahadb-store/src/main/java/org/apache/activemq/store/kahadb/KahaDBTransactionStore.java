@@ -414,6 +414,8 @@ public class KahaDBTransactionStore implements TransactionStore {
             throws IOException {
 
         if (message.getTransactionId() != null) {
+            //看这里到逻辑感觉是如果是xa事务或则这个事务支持同步存储和分发消息到话就同步添加消息
+            //所有到方法都是返回到同一个future 感觉是不是所有方法都会有个同步机制或则future里面会存储很多到执行结果
             if (message.getTransactionId().isXATransaction() || theStore.isConcurrentStoreAndDispatchTransactions() == false) {
                 destination.addMessage(context, message);
                 return AbstractMessageStore.FUTURE;

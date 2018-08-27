@@ -930,15 +930,19 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
         do {
             //应该是阻塞到有空间为止
             checkUsage(context, producerExchange, message);
+            //目测是一个全局的计数器
             message.getMessageId().setBrokerSequenceId(getDestinationSequenceId());
             if (store != null && message.isPersistent()) {
+                //为什么设为空呢 难道新加入的消息会有这个值吗
                 message.getMessageId().setFutureOrSequenceLong(null);
                 try {
                     //AMQ-6133 - don't store async if using persistJMSRedelivered
                     //This flag causes a sync update later on dispatch which can cause a race
                     //condition if the original add is processed after the update, which can cause
                     //a duplicate message to be stored
+                    //看这注释好像是 异步添加消息的时候 如果是更新的化 添加和更新获取锁的顺序会导致消息重复添加
                     if (messages.isCacheEnabled() && !isPersistJMSRedelivered()) {
+                        //这个逻辑需要看代理类 不能直接进入到store具体实现类里
                         result = store.asyncAddQueueMessage(context, message, isOptimizeStorage());
                         result.addListener(new PendingMarshalUsageTracker(message));
                     } else {

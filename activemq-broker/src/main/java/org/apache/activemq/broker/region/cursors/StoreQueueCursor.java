@@ -101,6 +101,13 @@ public class StoreQueueCursor extends AbstractPendingMessageCursor {
     }
 
     @Override
+    //返回值应该是表示是否添加成功
+    //根据消息是否是持久化的好像被放到不同的地方
+    //取消息的时候会从两个地方取 但是这里放进去的时候又是将持久化消息与非持久化消息分开放
+    //感觉很符合逻辑 这样就保证了两个地方的消息不会重复
+    //持久化到底是指一个消息本身 还是说指一个地址呢
+    //现在来看 好像持久化是生产者设置的
+    //也就是说一个地址里面既有持久化消息也有飞持久化消息 那么问题来了 非持久化里面的消息也会放到文件里面是为什么呢  难道是怕消息过多导致内存溢出吗
     public synchronized boolean tryAddMessageLast(MessageReference node, long maxWait) throws Exception {
         boolean result = true;
         if (node != null) {

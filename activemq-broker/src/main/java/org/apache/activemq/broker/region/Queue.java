@@ -823,6 +823,7 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
         }
     }
 
+    //处理游标的时候会把所有消息遍历一遍
     private final LinkedList<MessageContext> indexOrderedCursorUpdates = new LinkedList<>();
 
     @Override
@@ -848,6 +849,8 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
     }
 
     //应该就是更新游标吧
+    //每添加一次消息这个方法就会被执行一次 那么问题来了 这个集合里面应该每次只有一个值吧
+    //既然只有一个值 为什么还这么浪费的搞个集合呢 不太符合常理  应该是蹊跷
     private void doPendingCursorAdditions() throws Exception {
         //用来记录所有的更新
         LinkedList<MessageContext> orderedUpdates = new LinkedList<>();
@@ -859,6 +862,8 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
                 while (candidate != null && candidate.message.getMessageId().getFutureOrSequenceLong() != null) {
                     candidate = indexOrderedCursorUpdates.removeFirst();
                     // check for duplicate adds suppressed by the store
+                    //返回的是long的话代表了消息存储的内部分配id
+                    //-1代表了什么呢  难道是代表添加错误吗
                     if (candidate.message.getMessageId().getFutureOrSequenceLong() instanceof Long && ((Long) candidate.message.getMessageId().getFutureOrSequenceLong()).compareTo(-1l) == 0) {
                         LOG.warn("{} messageStore indicated duplicate add attempt for {}, suppressing duplicate dispatch", this, candidate.message.getMessageId());
                     } else {
@@ -870,6 +875,10 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
             messagesLock.writeLock().lock();
             try {
                 for (MessageContext messageContext : orderedUpdates) {
+                    //这里又添加一次是在干嘛
+                    //看起来像是 之前的逻辑是吧消息添加到日志文件中取了 这里是吧消息放到缓存里面去 以便获取的时候快点
+                    //但是看起来还是有点问题 一般来讲 消息是有先来后到的 每次添加到缓存的最后 并不代表整个消息的最后把
+                    //除非是缓存里面放了全部的消息 缓存的两个对象的消息加起来很可能满足
                     if (!messages.addMessageLast(messageContext.message)) {
                         // cursor suppressed a duplicate
                         messageContext.duplicate = true;

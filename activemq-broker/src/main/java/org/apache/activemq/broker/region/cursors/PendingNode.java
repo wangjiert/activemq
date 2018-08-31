@@ -21,6 +21,7 @@ import org.apache.activemq.util.LinkedNode;
 
 public class PendingNode extends LinkedNode {
     private final MessageReference message;
+    //存这个东西干什么
     private final OrderedPendingList list;
     public PendingNode(OrderedPendingList list,MessageReference message) {
         this.list = list;

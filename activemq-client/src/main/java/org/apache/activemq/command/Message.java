@@ -63,6 +63,7 @@ public abstract class Message extends BaseCommand implements MarshallAware, Mess
     protected ActiveMQDestination destination;
     protected TransactionId transactionId;
 
+    //看来超时时间是早就算好了啊
     protected long expiration;
     protected long timestamp;
     protected long arrival;

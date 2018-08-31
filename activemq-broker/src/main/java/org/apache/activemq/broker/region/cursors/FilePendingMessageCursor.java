@@ -225,6 +225,8 @@ public class FilePendingMessageCursor extends AbstractPendingMessageCursor imple
             try {
                 regionDestination = (Destination) node.getMessage().getRegionDestination();
                 if (isDiskListEmpty()) {
+                    //看上去逻辑很对 先看磁盘上有没有数据 如果没有的话 如果内存还可以放就放内存 如果满了就写到文件里面
+                    //这样就可以保持数据的顺序了
                     if (hasSpace() || this.store == null) {
                         memoryList.addMessageLast(node);
                         node.incrementReferenceCount();
@@ -232,14 +234,23 @@ public class FilePendingMessageCursor extends AbstractPendingMessageCursor imple
                         return true;
                     }
                 }
+                //文件里面有数据或者内存满了进入到这里
                 if (!hasSpace()) {
+                    //内存满了进入这里
                     if (isDiskListEmpty()) {
+                        //文件里面没有数据进这里
+
+                        //这应该是把内存里面的超时消息删掉来释放空间吧
+                        //猜对了
+                        //有空间了就放到内存
                         expireOldMessages();
                         if (hasSpace()) {
                             memoryList.addMessageLast(node);
                             node.incrementReferenceCount();
                             return true;
                         } else {
+                            //看起来像是把内存数据写到文件里面
+                            //但是为什么要这么搞呢
                             flushToDisk();
                         }
                     }

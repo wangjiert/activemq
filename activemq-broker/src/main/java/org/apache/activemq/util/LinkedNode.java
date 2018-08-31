@@ -79,6 +79,7 @@ public class LinkedNode {
      */
     public LinkedNode linkAfter(LinkedNode rightHead) {
 
+        //不能把自己添加到自己的右边
         if (rightHead == this) {
             throw new IllegalArgumentException("You cannot link to yourself");
         }

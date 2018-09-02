@@ -58,6 +58,7 @@ public class FilePendingMessageCursor extends AbstractPendingMessageCursor imple
     //这个东西看起来像是把东西存在磁盘上的
     //那memoryList这个对象又是干嘛的呢 把消息从这个对象取出来然后放到memoryList中吗
     private final PListStore store;
+    //目前看来这个是queue的名字 也就是说一个queue对应一个这个对象
     private final String name;
     //很明显内存相关的一个对象
     //和下面的对象的消息不存在重叠
@@ -257,6 +258,7 @@ public class FilePendingMessageCursor extends AbstractPendingMessageCursor imple
                 }
                 if (systemUsage.getTempUsage().waitForSpace(maxWaitTime)) {
                     ByteSequence bs = getByteSequence(node.getMessage());
+                    //写到文件中并更新index
                     getDiskList().addLast(node.getMessageId().toString(), bs);
                     return true;
                 }
@@ -496,6 +498,8 @@ public class FilePendingMessageCursor extends AbstractPendingMessageCursor imple
     public PList getDiskList() {
         if (diskList == null) {
             try {
+                //如果不存在的话 应该就会自己创建吧
+                //这个name是什么鬼呢
                 diskList = store.getPList(name);
             } catch (Exception e) {
                 LOG.error("Caught an IO Exception getting the DiskList {}", name, e);

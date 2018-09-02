@@ -102,7 +102,9 @@ public class PListImpl extends ListIndex<String, Location> implements PList {
 
     @Override
     public Object addLast(final String id, final ByteSequence bs) throws IOException {
+        //写到数据文件中
         final Location location = this.store.write(bs, false);
+        //更新index
         synchronized (indexLock) {
             this.store.getPageFile().tx().execute(new Transaction.Closure<IOException>() {
                 @Override

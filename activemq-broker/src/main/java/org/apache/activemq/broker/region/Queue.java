@@ -1929,12 +1929,14 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
             dropMessage(reference);
         } else {
             try {
+                //已经删了index了
                 acknowledge(context, sub, ack, reference);
             } finally {
                 context.getTransaction().addSynchronization(new Synchronization() {
 
                     @Override
                     public void afterCommit() throws Exception {
+                        //从链表中删除消息
                         dropMessage(reference);
                         wakeup();
                     }
@@ -1982,8 +1984,10 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
     }
 
     @Override
+    //处理超时的数据
     public void messageExpired(ConnectionContext context, Subscription subs, MessageReference reference) {
         LOG.debug("message expired: {}", reference);
+        //发送到dlq
         broker.messageExpired(context, reference, subs);
         destinationStatistics.getExpired().increment();
         try {

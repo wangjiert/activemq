@@ -1336,6 +1336,7 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
                 pageFile.tx().execute(new Transaction.Closure<IOException>() {
                     @Override
                     public void execute(Transaction tx) throws IOException {
+                        //删除index
                         updateIndex(tx, command, location);
                     }
                 });

@@ -39,6 +39,8 @@ public class ListIndex<Key,Value> implements Index<Key,Value> {
     protected PageFile pageFile;
     //起始id
     protected long headPageId;
+    //怎么感觉和上面的一起都是表示根节点的呢 但是需要这样吗
+    //每个节点不是可以自己表示是否需要多个page存放数据吗
     protected long tailPageId;
     private AtomicLong size = new AtomicLong(0);
 

@@ -153,7 +153,10 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
     //这个是会变的
     private ConnectionContext context;
     private boolean networkConnection;
+    //为什么可以让一个activemq连接的属性改变这个变量的值
+    //这是不是说明了 其实一个物理连接对应一个activemq连接  想想也是蛮合理的
     private boolean faultTolerantConnection;
+    //wireformat的版本号
     private final AtomicInteger protocolVersion = new AtomicInteger(CommandTypes.PROTOCOL_VERSION);
     private DemandForwardingBridge duplexBridge;
     private final TaskRunnerFactory taskRunnerFactory;
@@ -324,6 +327,7 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
     }
 
     @Override
+    //处理消息的进入地方 然后会调用具体的处理
     public Response service(Command command) {
         MDC.put("activemq.connector", connector.getUri().toString());
         Response response = null;
@@ -413,6 +417,7 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
     }
 
     @Override
+    //这应该是处理心跳吧
     public Response processKeepAlive(KeepAliveInfo info) throws Exception {
         return null;
     }
@@ -424,6 +429,7 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
     }
 
     @Override
+    //这看来是最早发送过来的消息啊
     public Response processWireFormat(WireFormatInfo info) throws Exception {
         wireFormatInfo = info;
         protocolVersion.set(info.getVersion());
@@ -805,8 +811,10 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
         // they were not.
         if (wireFormatInfo != null && wireFormatInfo.getVersion() <= 2) {
             //这是什么 看起来像是集群一样的
+            //默认就是true啊  难道什么时候设置为false了吗
             info.setClientMaster(true);
         }
+        //每个连接都有一个与之对应的状态对象吧
         TransportConnectionState state;
         // Make sure 2 concurrent connections by the same ID only generate 1
         // TransportConnectionState object.
@@ -814,15 +822,18 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
         synchronized (brokerConnectionStates) {
             state = (TransportConnectionState) brokerConnectionStates.get(info.getConnectionId());
             if (state == null) {
+                //一个具体的连接应该可以创建多个activemq连接吧
                 state = new TransportConnectionState(info, this);
                 brokerConnectionStates.put(info.getConnectionId(), state);
             }
+            //感觉好多地方都有这种引用技术的类似代码 难道是有个线程在不停的根据引用计数删除集合元素吗
             state.incrementReference();
         }
         // If there are 2 concurrent connections for the same connection id,
         // then last one in wins, we need to sync here
         // to figure out the winner.
         synchronized (state.getConnectionMutex()) {
+            //怎么会不相等呢 难道说还有从其他连接同步过来的状态吗
             if (state.getConnection() != this) {
                 LOG.debug("Killing previous stale connection: {}", state.getConnection().getRemoteAddress());
                 state.getConnection().stop();
@@ -839,6 +850,7 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
         this.faultTolerantConnection = info.isFaultTolerant();
         // Setup the context.
         //每个连接才有一个客户端id
+        //客户端id是什么呢  是不是一个具体的机器对应一个id
         String clientId = info.getClientId();
         context = new ConnectionContext();
         context.setBroker(broker);
@@ -847,7 +859,9 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
         context.setConnection(this);
         context.setConnectionId(info.getConnectionId());
         context.setConnector(connector);
+        //目前而言肯定是个null 需要使用者自己去实现的 可以看一下怎么用的
         context.setMessageAuthorizationPolicy(getMessageAuthorizationPolicy());
+        //网络连接会是什么呢
         context.setNetworkConnection(networkConnection);
         context.setFaultTolerant(faultTolerantConnection);
         context.setTransactions(new ConcurrentHashMap<TransactionId, Transaction>());
@@ -859,7 +873,6 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
         state.setContext(context);
         state.setConnection(this);
         if (info.getClientIp() == null) {
-            //看来是否设置客户端ip是用户自己决定的 框架本身是没有管的
             info.setClientIp(getRemoteAddress());
         }
 

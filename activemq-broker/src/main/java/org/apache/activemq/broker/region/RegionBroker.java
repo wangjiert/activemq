@@ -97,6 +97,7 @@ public class RegionBroker extends EmptyBroker {
     private boolean started;
     private boolean keepDurableSubsActive;
 
+    //这个里面连接可能有点多 有可能没有删除被覆盖的连接
     private final CopyOnWriteArrayList<Connection> connections = new CopyOnWriteArrayList<Connection>();
     private final Map<ActiveMQDestination, ActiveMQDestination> destinationGate = new HashMap<ActiveMQDestination, ActiveMQDestination>();
     //分别是什么类型 应该前面的是标准的jms地址 后面的应该是broker里面的地址
@@ -286,6 +287,8 @@ public class RegionBroker extends EmptyBroker {
             }
         }
 
+        //加进去了新的 也没有把旧的删除掉呢
+        //还是说在上面的stop里面会有删除呢
         connections.add(context.getConnection());
     }
 

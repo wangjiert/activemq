@@ -31,6 +31,7 @@ import org.apache.activemq.command.Message;
  * 
  * 
  */
+//说白了就是一个缓存机制 暂时还没看到怎么使用的
 public class MessageEvaluationContext {
 
 	protected MessageReference messageReference;

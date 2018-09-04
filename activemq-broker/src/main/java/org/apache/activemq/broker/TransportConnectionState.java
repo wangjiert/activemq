@@ -27,12 +27,13 @@ import org.apache.activemq.command.ConnectionInfo;
 public class TransportConnectionState extends org.apache.activemq.state.ConnectionState {
 
     private ConnectionContext context;
+    //很多个具体的连接都对应一个这个对象
     private TransportConnection connection;
     //每次调用addConnection时才增加 感觉像是表示一个连接被建立的次数
     //应该是客户端和broker端断开了 然后重连的时候并没有重新非配一个连接id
     private AtomicInteger referenceCounter = new AtomicInteger();
     //大神们很喜欢新建个Object对象当lock使用啊
-    //相对于直接用this有什么有点吗
+    //相对于直接用this有什么优点吗
     private final Object connectionMutex = new Object();
 
     public TransportConnectionState(ConnectionInfo info, TransportConnection transportConnection) {

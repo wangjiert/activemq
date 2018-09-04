@@ -34,8 +34,12 @@ public class ConnectionInfo extends BaseCommand {
     protected String password;
     protected BrokerId[] brokerPath;
     protected boolean brokerMasterConnector;
+    //可以操控吗
     protected boolean manageable;
+    //这个是什么呢
     protected boolean clientMaster = true;
+    //容忍错误是几个意思呢  是不是错误了之后会自动转发到另一个url的那个机制
+    //看来不是了 下面的这个才是这个机制
     protected boolean faultTolerant = false;
     //应该是表示这个连接是不是因为连接失败之后又用另一个uri进行的连接
     protected boolean failoverReconnect;

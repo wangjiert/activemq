@@ -101,6 +101,7 @@ public abstract class PrefetchSubscription extends AbstractSubscription {
 
             // Have the destination push us some messages.
             //看来一个消费者是可以同时消费多个消息地址的
+            //一个消费者对应一个订阅
             for (Destination dest : destinations) {
                 dest.iterate();
             }

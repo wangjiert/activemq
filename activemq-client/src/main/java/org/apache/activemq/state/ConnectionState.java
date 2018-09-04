@@ -40,8 +40,11 @@ import org.apache.activemq.command.TransactionId;
 
 public class ConnectionState {
 
+    //这个包含了一个连接的具体信息
+    //没记错的话里面好像有用户名和密码 在哪里会用到呢
     ConnectionInfo info;
     private final ConcurrentMap<TransactionId, TransactionState> transactions = new ConcurrentHashMap<TransactionId, TransactionState>();
+    //每个连接都有一个sessionId为-1的sessionState
     private final ConcurrentMap<SessionId, SessionState> sessions = new ConcurrentHashMap<SessionId, SessionState>();
     private final List<DestinationInfo> tempDestinations = Collections.synchronizedList(new ArrayList<DestinationInfo>());
     private final AtomicBoolean shutdown = new AtomicBoolean(false);
@@ -101,6 +104,7 @@ public class ConnectionState {
     }
 
     //这里有什么意义吗 我只是创建个连接 偏偏还自动创建一个session
+    //sessionInfo里面只有一个sessionId
     public void addSession(SessionInfo info) {
         checkShutdown();
         sessions.put(info.getSessionId(), new SessionState(info));

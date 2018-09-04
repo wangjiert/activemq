@@ -35,6 +35,7 @@ public class MessagePull extends BaseCommand implements TransientInitializer {
     private MessageId messageId;
     private String correlationId;
 
+    //额外需要获取的数量
     private transient int quantity = 1;
     private transient boolean alwaysSignalDone;
     private transient boolean tracked = false;

@@ -32,6 +32,7 @@ import org.apache.activemq.command.SessionInfo;
 public class SessionState {
     final SessionInfo info;
 
+    //只是用来确认是否重复用吗
     private final Map<ProducerId, ProducerState> producers = new ConcurrentHashMap<ProducerId, ProducerState>();
     private final Map<ConsumerId, ConsumerState> consumers = new ConcurrentHashMap<ConsumerId, ConsumerState>();
     private final AtomicBoolean shutdown = new AtomicBoolean(false);

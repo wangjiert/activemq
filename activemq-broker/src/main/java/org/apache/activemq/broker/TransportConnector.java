@@ -68,7 +68,7 @@ public class TransportConnector implements Connector, BrokerServiceAware {
     private Broker broker;
     //看不懂
     private boolean updateClusterClients = false;
-    //这是个啥
+    //用于负载均衡的
     private boolean rebalanceClusterClients;
     private boolean updateClusterClientsOnRemove = false;
     private String updateClusterFilter;
@@ -413,6 +413,7 @@ public class TransportConnector implements Connector, BrokerServiceAware {
                 }
             }
         }
+        //这个消息会发送个客户端 用于告知集群的拓扑结构有变化
         ConnectionControl control = new ConnectionControl();
         control.setConnectedBrokers(connectedBrokers);
         control.setRebalanceConnection(rebalance);

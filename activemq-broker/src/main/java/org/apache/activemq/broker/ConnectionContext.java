@@ -199,6 +199,7 @@ public class ConnectionContext {
         this.inRecoveryMode = inRecoveryMode;
     }
 
+    //创建这个对象之后就会自动的赋一个空的map给这个变量 所以不用担心为空的问题
     public ConcurrentMap<TransactionId, Transaction> getTransactions() {
         return transactions;
     }

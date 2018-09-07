@@ -447,6 +447,7 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
         return null;
     }
 
+    //为什么又有提交事务 又有终止事务呢 不是提交事务就相当于终止吗
     @Override
     public Response processBeginTransaction(TransactionInfo info) throws Exception {
         TransportConnectionState cs = lookupConnectionState(info.getConnectionId());

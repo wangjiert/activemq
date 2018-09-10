@@ -90,6 +90,7 @@ public class DestinationMap {
         }
     }
 
+    //就是原封不动的添加 没有什么特殊的
     public void unsynchronizedPut(ActiveMQDestination key, Object value) {
         if (key.isComposite()) {
             ActiveMQDestination[] destinations = key.getCompositeDestinations();

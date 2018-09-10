@@ -135,6 +135,7 @@ public class DestinationMapNode implements DestinationNode {
     }
 
     public void add(String[] paths, int idx, Object value) {
+        //等于是可以理解的  但是大于是为什么呢
         if (idx >= paths.length) {
             values.add(value);
         } else {
@@ -208,6 +209,8 @@ public class DestinationMapNode implements DestinationNode {
      */
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public void appendMatchingWildcards(Set answer, String[] paths, int idx) {
+        //idx表示的是这个节点的下一个节点的index, 根节点没有index
+        //这个应该不会成立吧
         if (idx - 1 > pathLength) {
             return;
         }

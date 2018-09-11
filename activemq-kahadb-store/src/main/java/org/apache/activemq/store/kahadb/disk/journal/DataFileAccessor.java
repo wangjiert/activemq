@@ -33,6 +33,7 @@ final class DataFileAccessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(DataFileAccessor.class);
     private final DataFile dataFile;
+    //又是journal的集合的引用
     private final Map<Journal.WriteKey, Journal.WriteCommand> inflightWrites;
     private final RecoverableRandomAccessFile file;
     private boolean disposed;
@@ -44,7 +45,7 @@ final class DataFileAccessor {
      */
     public DataFileAccessor(Journal dataManager, DataFile dataFile) throws IOException {
         this.dataFile = dataFile;
-        //引用的是journey的集合
+        //引用的是journey的集合 目前已经看到三个地方引用这个集合了
         this.inflightWrites = dataManager.getInflightWrites();
         this.file = dataFile.openRandomAccessFile();
     }

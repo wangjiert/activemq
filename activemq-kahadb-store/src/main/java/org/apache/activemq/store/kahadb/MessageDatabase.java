@@ -263,6 +263,7 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
 
     protected JournalDiskSyncStrategy journalDiskSyncStrategy = JournalDiskSyncStrategy.ALWAYS;
     protected boolean archiveDataLogs;
+    //归档文件的目录吧
     protected File directoryArchive;
     protected AtomicLong journalSize = new AtomicLong(0);
     long journalDiskSyncInterval = 1000;
@@ -488,7 +489,9 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
         this.indexLock.writeLock().lock();
         try {
             IOHelper.mkdirs(directory);
+            //删所有消息这么麻烦吗 直接删除所有文件不好吗
             if (deleteAllMessages) {
+                //好像本来就是false
                 getJournal().setCheckForCorruptionOnStartup(false);
                 getJournal().start();
                 getJournal().delete();

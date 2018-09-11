@@ -47,6 +47,7 @@ class DataFileAppender implements FileAppender {
 
     protected final Journal journal;
     //只是记录了异步的写消息
+    //和journal引用的是同一个集合
     protected final Map<Journal.WriteKey, Journal.WriteCommand> inflightWrites;
     protected final Object enqueueMutex = new Object();
     protected WriteBatch nextWriteBatch;
@@ -55,7 +56,9 @@ class DataFileAppender implements FileAppender {
     protected IOException firstAsyncException;
     protected final CountDownLatch shutdownDone = new CountDownLatch(1);
     protected int maxWriteBatchSize;
+    //异步同步就是每次写完一批就同步一次吗
     protected final boolean syncOnComplete;
+    //这个应该就是启动个定时任务周期性执行吧
     protected final boolean periodicSync;
 
     protected boolean running;
@@ -108,6 +111,8 @@ class DataFileAppender implements FileAppender {
      */
     public DataFileAppender(Journal dataManager) {
         this.journal = dataManager;
+        //这个应该都是只有一个对象的吧
+        //为什么要引用同一个对象呢 为什么不通过journal间接的来访问这个map呢
         this.inflightWrites = this.journal.getInflightWrites();
         this.maxWriteBatchSize = this.journal.getWriteBatchSize();
         this.syncOnComplete = this.journal.isEnableAsyncDiskSync();

@@ -23,6 +23,7 @@ import java.util.ArrayList;
  * 
  * @author chirino
  */
+//感觉这个类是不会实现什么核心功能了 那存在的必要性是什么呢
 public class LinkedNodeList<T extends LinkedNode<T>> {
 
     T head;
@@ -82,6 +83,7 @@ public class LinkedNodeList<T extends LinkedNode<T>> {
         }
     }
 
+    //就是把每一个节点的list改为左边的
     public T reparent(LinkedNodeList<T> list) {
         size += list.size;
         T n = list.head;

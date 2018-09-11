@@ -34,6 +34,7 @@ public class DataFile extends LinkedNode<DataFile> implements Comparable<DataFil
     protected final File file;
     protected final Integer dataFileId;
     //创建的时候有赋值过 后来难道不停的改吗
+    //记录的是文件的当前长度
     protected volatile int length;
     protected int typeCode = STANDARD_LOG_FILE;
     protected final SequenceSet corruptedBlocks = new SequenceSet();
@@ -41,7 +42,9 @@ public class DataFile extends LinkedNode<DataFile> implements Comparable<DataFil
 
     DataFile(File file, int number) {
         this.file = file;
+        //不是有自动装包功能吗 还需要自己转类型吗
         this.dataFileId = Integer.valueOf(number);
+        //遍历目录找到的文件 为什么会不存在呢 难道还有什么线程在删吗
         length = (int)(file.exists() ? file.length() : 0);
     }
 

@@ -191,6 +191,7 @@ public class Journal {
     public static final String DEFAULT_ARCHIVE_DIRECTORY = "data-archive";
     public static final String DEFAULT_FILE_PREFIX = "db-";
     public static final String DEFAULT_FILE_SUFFIX = ".log";
+    //为什么文件要设置的这么小呢
     public static final int DEFAULT_MAX_FILE_LENGTH = 1024 * 1024 * 32;
     public static final int DEFAULT_CLEANUP_INTERVAL = 1000 * 30;
     public static final int DEFAULT_MAX_WRITE_BATCH_SIZE = 1024 * 1024 * 4;
@@ -199,8 +200,13 @@ public class Journal {
 
     protected final Map<WriteKey, WriteCommand> inflightWrites = new ConcurrentHashMap<WriteKey, WriteCommand>();
 
+    //数据目录
     protected File directory = new File(DEFAULT_DIRECTORY);
+    //归档目录
     protected File directoryArchive;
+    //设置归档文件目录时会被置为true
+    //表示归档文件能否被覆盖吧
+    //既然有归档 那么文件应该不是直接删了吧 应该是可能归档可能删除吧
     private boolean directoryArchiveOverridden = false;
 
     protected String filePrefix = DEFAULT_FILE_PREFIX;
@@ -208,6 +214,7 @@ public class Journal {
     protected boolean started;
 
     protected int maxFileLength = DEFAULT_MAX_FILE_LENGTH;
+    //4m
     protected int writeBatchSize = DEFAULT_MAX_WRITE_BATCH_SIZE;
 
     //猜测这个是不停的写在文件的最后面
@@ -216,20 +223,27 @@ public class Journal {
     //这个应该是可以随便写在哪
     protected DataFileAccessorPool accessorPool;
 
+    //这个里面放的最多  不管是不是合法的都在里面
     protected Map<Integer, DataFile> fileMap = new HashMap<Integer, DataFile>();
     protected Map<File, DataFile> fileByFileMap = new LinkedHashMap<File, DataFile>();
+    //存放使用中的DataFile
     protected LinkedNodeList<DataFile> dataFiles = new LinkedNodeList<DataFile>();
 
     //最后一次的location
     //也记录了最后写入的消息的location
     protected final AtomicReference<Location> lastAppendLocation = new AtomicReference<Location>();
     protected ScheduledFuture cleanupTask;
+    //可能不是从0开始的  初始值是store传过来的 目前看肯定是0
+    //记录了所有datafile的数据长度和
     protected AtomicLong totalLength = new AtomicLong();
+    //是否归档吧
     protected boolean archiveDataLogs;
     private ReplicationTarget replicationTarget;
     protected boolean checksum;
     //启动的时候检查数据文件的非法数据
     protected boolean checkForCorruptionOnStartup;
+    //这个值貌似和下面的同步策略不冲突
+    //但是这个值是根据下面的策略算出来的 有点浪费
     protected boolean enableAsyncDiskSync = true;
     private int nextDataFileId = 1;
     private Object dataFileIdLock = new Object();
@@ -269,8 +283,10 @@ public class Journal {
 
         //列出数据目录下所有的db-*.log文件
         File[] files = directory.listFiles(new FilenameFilter() {
+            //看这个方法的参数 感觉会遍历子目录呀
             @Override
             public boolean accept(File dir, String n) {
+                //只接受db-*.log文件
                 return dir.equals(directory) && n.startsWith(filePrefix) && n.endsWith(fileSuffix);
             }
         });
@@ -304,7 +320,9 @@ public class Journal {
                     LOG.info("ignoring zero length, partially initialised journal data file: " + df);
                     continue;
                 } else if (l.getLast().equals(df) && isUnusedPreallocated(df)) {
+                    //需要看一下 预初始化的时候到底往文件写了些什么
                     //如果最后一个文件是预申请的 还没用也不处理
+                    //预先申请时候是在文件头和文件尾部同时写了EOF 同时文件长度直接变成最大的文件长度
                     continue;
                 }
                 dataFiles.addLast(df);
@@ -504,12 +522,14 @@ public class Journal {
     public boolean isUnusedPreallocated(DataFile dataFile) throws IOException {
         //好像是一个创建一个新的数据文件时 会提前初始化下一个数据文件
         if (preallocationScope == PreallocationScope.ENTIRE_JOURNAL_ASYNC) {
-            //从缓存里面拿 或则新建
+            //从缓存里面拿 或者新建
             DataFileAccessor reader = accessorPool.openDataFileAccessor(dataFile);
             try {
+                //5个字节加上魔数的长度
                 byte[] firstFewBytes = new byte[BATCH_CONTROL_RECORD_HEADER.length];
                 reader.readFully(0, firstFewBytes);
                 ByteSequence bs = new ByteSequence(firstFewBytes);
+                //检查空 只看前五个字节就够了
                 return bs.startsWith(EOF_RECORD);
             } catch (Exception ignored) {
             } finally {
@@ -531,6 +551,7 @@ public class Journal {
             randomAccessFile.seek(0);
             final long totalFileLength = randomAccessFile.length();
             //应该读的不是刚好一个批处理
+            //一次读4m
             byte[] data = new byte[getWriteBatchSize()];
             ByteSequence bs = new ByteSequence(data, 0, randomAccessFile.read(data));
 
@@ -654,6 +675,9 @@ public class Journal {
             //需要看一下数据长度是否包含了头部的数据
             //
             int size = controlIs.readInt();
+            //从这里看 只有最后的EOF被保存了 前面的EOF都被覆盖了
+            //文件长度没这么大 因为长度是int类型的 所以这里判断的是批数据的最大的的可能的值
+            //这里的判断也说明了数据的长度并不包括批处理头的长度
             if (size < 0 || size > Integer.MAX_VALUE - (BATCH_CONTROL_RECORD_SIZE + EOF_RECORD.length)) {
                 return -2;
             }
@@ -712,6 +736,7 @@ public class Journal {
                     throw new EOFException("request for " + required + " bytes reached EOF");
                 }
             }
+            //这是不是有问题呀 如果刚好遇到eof 那么返回值是-1 这会导致length减一吧
             bs.setLength(bs.length + read);
         }
     }

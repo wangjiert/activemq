@@ -34,6 +34,7 @@ import java.util.TreeMap;
  */
 public class Transaction implements Iterable<Page> {
 
+    //下面两个指向同一个文件
     private RandomAccessFile tmpFile;
     private File txFile;
     private long nextLocation = 0;
@@ -276,6 +277,7 @@ public class Transaction implements Iterable<Page> {
         // that we
         // we do the page writes incrementally while the data is being
         // marshalled.
+        //为什么是两倍呢  如果一个page对应的数据太大 两倍也不一定够吧
         DataByteArrayOutputStream out = new DataByteArrayOutputStream(pageFile.getPageSize() * 2) {
             Page current = copy;
 

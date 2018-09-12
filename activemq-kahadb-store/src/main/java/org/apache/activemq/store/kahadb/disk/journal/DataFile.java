@@ -38,6 +38,7 @@ public class DataFile extends LinkedNode<DataFile> implements Comparable<DataFil
     protected volatile int length;
     protected int typeCode = STANDARD_LOG_FILE;
     protected final SequenceSet corruptedBlocks = new SequenceSet();
+    //创建的时候会赋值
     protected RecoverableRandomAccessFile appendRandomAccessFile;
 
     DataFile(File file, int number) {

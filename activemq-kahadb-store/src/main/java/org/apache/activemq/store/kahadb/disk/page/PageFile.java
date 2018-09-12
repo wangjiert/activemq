@@ -76,6 +76,7 @@ public class PageFile {
 
     private static final int RECOVERY_FILE_HEADER_SIZE = 1024 * 4;
     //这个头是不是有点大啊 相当于一个头部信息有2k
+    //是为了兼容pagesize的大小吗 但是pagesize是可以变得呀
     private static final int PAGE_FILE_HEADER_SIZE = 1024 * 4;
 
     // Recovery header is (long offset)
@@ -111,6 +112,7 @@ public class PageFile {
     private final AtomicBoolean loaded = new AtomicBoolean();
     // The number of pages we are aiming to write every time we
     // write to disk.
+    //一批写多少个page
     int writeBatchSize = DEFAULT_WRITE_BATCH_SIZE;
 
     // We keep a cache of pages recently used?
@@ -135,6 +137,7 @@ public class PageFile {
     private CountDownLatch checkpointLatch;
 
     // Keeps track of writes that are being written to disk.
+    //key记录了什么信息 page id
     private final TreeMap<Long, PageWrite> writes = new TreeMap<Long, PageWrite>();
 
     // Keeps track of free pages.
@@ -150,6 +153,7 @@ public class PageFile {
     private MetaData metaData;
 
     //这个又是在哪里加的数据呢
+    //事务提交或则回滚的时候加进去的
     private final ArrayList<File> tmpFilesForRemoval = new ArrayList<File>();
 
     private boolean useLFRUEviction = false;
@@ -162,10 +166,11 @@ public class PageFile {
         Page page;
         byte[] current;
         byte[] diskBound;
-        //这两个东西有用吗 没看到啊 除了判断的时候
         long currentLocation = -1;
         long diskBoundLocation = -1;
+        //当一个事务中需要写入的数据大于事务最大值时 数据就会写入临时文件
         File tmpFile;
+        //文件中数据的长度 目前看来这个肯定刚好是pagesize的大小 那么这个变量存在的必要性是什么
         int length;
 
         public PageWrite(Page page, byte[] data) {
@@ -173,6 +178,8 @@ public class PageFile {
             current = data;
         }
 
+        //currentLocation值是数据在文件中的偏移量
+        //length值是文件中数据的大小
         public PageWrite(Page page, long currentLocation, int length, File tmpFile) {
             this.page = page;
             this.currentLocation = currentLocation;
@@ -217,10 +224,10 @@ public class PageFile {
         }
 
         void begin() {
+            //说明临时文件有东西
             if (currentLocation != -1) {
-                //这个是开始写数据了  那么你换个location有什么用
                 diskBoundLocation = currentLocation;
-            } else {//这个是还没开始写吧
+            } else {//说明临时文件没东西  数据是在current里面的
                 diskBound = current;
             }
             current = null;
@@ -904,6 +911,7 @@ public class PageFile {
         }
 
         Page<T> page = new Page<T>(seq.getFirst());
+        //为什么要把它设为0
         page.makeFree(0);
         // LOG.debug("allocated: "+page.getPageId());
         return page;
@@ -980,6 +988,7 @@ public class PageFile {
 
             // Once we start approaching capacity, notify the writer to start writing
             // sync immediately for long txs
+            //longTx表示的是数据在文件里面 也就是数据量很大
             if (longTx || canStartWriteBatch()) {
 
                 if (enabledWriteThread) {
@@ -992,11 +1001,13 @@ public class PageFile {
     }
 
     private boolean canStartWriteBatch() {
+        //当前百分比
         int capacityUsed = ((writes.size() * 100) / writeBatchSize);
         if (enabledWriteThread) {
             // The constant 10 here controls how soon write batches start going to disk..
             // would be nice to figure out how to auto tune that value.  Make to small and
             // we reduce through put because we are locking the write mutex too often doing writes
+            //checkpointLatch!=null是不是说明有线程在等待执行完成 所以需要立即执行
             return capacityUsed >= 10 || checkpointLatch != null;
         } else {
             return capacityUsed >= 80 || checkpointLatch != null;
@@ -1046,6 +1057,8 @@ public class PageFile {
                     writes.notifyAll();
 
                     // If there is not enough to write, wait for a notification...
+                    //为什么要加个判断条件 checkpointLatch==null
+                    //感觉是不是只要有数据加进来这个一定不等于null
                     while (writes.isEmpty() && checkpointLatch == null && !stopWriter.get()) {
                         writes.wait(100);
                     }
@@ -1078,6 +1091,7 @@ public class PageFile {
                 // Move the current write to the diskBound write, this lets folks update the
                 // page again without blocking for this write.
                 write.begin();
+                //这个判断说明这个write是没有数据的
                 if (write.diskBound == null && write.diskBoundLocation == -1) {
                     batch.remove(write);
                 }
@@ -1175,6 +1189,7 @@ public class PageFile {
 
     private long recoveryFileSizeForPages(int pageCount) {
         //8字节用来干什么
+        //八个字节用来记录page id
         return RECOVERY_FILE_HEADER_SIZE + ((pageSize + 8) * pageCount);
     }
 
@@ -1218,8 +1233,7 @@ public class PageFile {
         LinkedHashMap<Long, byte[]> batch = new LinkedHashMap<Long, byte[]>();
         try {
             for (int i = 0; i < pageCounter; i++) {
-                //这个偏移量是哪个文件的
-                //记录的就是datafile的偏移量
+                //记录的是page id
                 long offset = recoveryFile.readLong();
                 byte[] data = new byte[pageSize];
                 if (recoveryFile.read(data, 0, pageSize) != pageSize) {

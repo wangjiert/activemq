@@ -232,6 +232,7 @@ public class Journal {
     //最后一次的location
     //也记录了最后写入的消息的location
     protected final AtomicReference<Location> lastAppendLocation = new AtomicReference<Location>();
+    //定期的清理工作 清理pool
     protected ScheduledFuture cleanupTask;
     //可能不是从0开始的  初始值是store传过来的 目前看肯定是0
     //记录了所有datafile的数据长度和
@@ -561,7 +562,6 @@ public class Journal {
                 int size = checkBatchRecord(bs, randomAccessFile);
                 //这是搞笑吗 文件里面读的数据的长度会超过文件自身的长度吗
                 //到时可能 如果里面有EOF的话会导致条件判断的这种情况
-                //EOF的问题很大啊  会出现中文件中间吗 或者是什么时候加进去的 预初始化的时候到时在最开始写过 会删掉吗
                 if (size >= 0 && location.getOffset() + BATCH_CONTROL_RECORD_SIZE + size <= totalFileLength) {
                     //找到一个EOF 就直接结束了 感觉这个EOF肯定不会是最后一个记录 不然不满足条件的后面
                     if (size == 0) {
@@ -899,6 +899,7 @@ public class Journal {
             dataFiles = new LinkedNodeList<DataFile>();
         }
         // reopen open file handles...
+        //浪费呀 这个journal都没用了 可能是给其他地方调这个方法的吧
         accessorPool = new DataFileAccessorPool(this);
         appender = new DataFileAppender(this);
         return result;

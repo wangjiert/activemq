@@ -41,6 +41,7 @@ public class Page<T> {
 
     // Points to the next page in the chunk stream
     long next;
+    //page file的pageNo 0存的是Metadata
     T data;
 
     public Page() {
@@ -89,6 +90,7 @@ public class Page<T> {
         os.writeInt(checksum);
     }
 
+    //page的前21字节记录的信息
     void read(DataInput is) throws IOException {
         type = is.readByte();
         txId = is.readLong();

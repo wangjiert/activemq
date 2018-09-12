@@ -568,7 +568,7 @@ public class Journal {
                         // eof batch record
                         break;
                     }
-                    //来来偏移量记录了完整数据的位置
+                    //偏移量记录了下一个待检查待位置
                     location.setOffset(location.getOffset() + BATCH_CONTROL_RECORD_SIZE + size);
                 } else {
 

@@ -79,6 +79,7 @@ public class Page<T> {
 
     public void makePageEnd(long size, long txId) {
         this.type = Page.PAGE_END_TYPE;
+        //这个是几个意思呢 公用吗  如果类型是end 这个变量就表示数据的长度吗
         this.next = size;
         this.txId = txId;
     }

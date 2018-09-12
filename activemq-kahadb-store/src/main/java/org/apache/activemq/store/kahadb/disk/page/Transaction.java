@@ -299,6 +299,7 @@ public class Transaction implements Iterable<Page> {
                                 next = allocate();
                             }
 
+                            //申请的时候本来就有一个事务id 岂不是很浪费吗
                             next.txId = current.txId;
 
                             // Write the page header
@@ -306,6 +307,7 @@ public class Transaction implements Iterable<Page> {
                             pos = 0;
 
                             current.makePagePart(next.getPageId(), getWriteTransactionId());
+                            //page的头重写一下
                             current.write(this);
 
                             // Do the page write..
@@ -321,6 +323,8 @@ public class Transaction implements Iterable<Page> {
                             // The page header marshalled after the data is written.
                             skip(Page.PAGE_HEADER_SIZE);
                             // Move the overflow data after the header.
+                            //也就是新的page头没变啊 那岂不是下一个page指向自己吗
+                            //应该是close的时候有特殊处理吧
                             System.arraycopy(buf, pageSize, buf, pos, oldPos - pageSize);
                             pos += oldPos - pageSize;
                             current = next;

@@ -141,13 +141,18 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
 
     protected class Metadata {
         protected Page<Metadata> page;
+        //最开始的时候是设置为关闭状态 什么时候改的呢
         protected int state;
         protected BTreeIndex<String, StoredDestination> destinations;
         protected Location lastUpdate;
+        //这个记录的是什么呢
         protected Location firstInProgressTransactionLocation;
+        //接下来两个变量好像和后面两个瞬时变量有点猫腻啊
+        //应该是把下面两个东西存在数据文件中 然后用location记录一下吧
         protected Location producerSequenceIdTrackerLocation = null;
         protected Location ackMessageFileMapLocation = null;
         protected transient ActiveMQMessageAuditNoSync producerSequenceIdTracker = new ActiveMQMessageAuditNoSync();
+        //两个整形分别记录的什么呢
         protected transient Map<Integer, Set<Integer>> ackMessageFileMap = new HashMap<>();
         protected int version = VERSION;
         protected int openwireVersion = OpenWireFormat.DEFAULT_STORE_VERSION;
@@ -193,10 +198,13 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
 
         public void write(DataOutput os) throws IOException {
             os.writeInt(state);
+            //最重要的东西 就写了个pageId
             os.writeLong(destinations.getPageId());
 
+            //先用一字节决定是否有值
             if (lastUpdate != null) {
                 os.writeBoolean(true);
+                //只是写了datafileId和偏移量
                 LocationMarshaller.INSTANCE.writePayload(lastUpdate, os);
             } else {
                 os.writeBoolean(false);
@@ -337,7 +345,7 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
                         metadata.page = page;
                         metadata.state = CLOSED_STATE;
                         metadata.destinations = new BTreeIndex<>(pageFile, tx.allocate().getPageId());
-
+                        //需要看一下 为什么pagefile和事务都有一个writes呢
                         tx.store(metadata.page, metadataMarshaller, true);
                     } else {
                         Page<Metadata> page = tx.load(0, metadataMarshaller);

@@ -27,6 +27,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * 
  * 
  */
+//记录都是数据文件中的偏移量
 public final class Location implements Comparable<Location> {
 
     public static final byte USER_TYPE = 1;

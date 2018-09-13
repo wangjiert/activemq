@@ -160,7 +160,9 @@ public class BTreeIndex<Key,Value> implements Index<Key,Value> {
             final Page<BTreeNode<Key,Value>> p = tx.load(pageId, null);
             if( p.getType() == Page.PAGE_FREE_TYPE ) {
                  // Need to initialize it..
+                //应该是创建一个空的node然后把空的node保存到文件
                 BTreeNode<Key, Value> root = createNode(p, null);
+                //都还没设置page的头里面保存的属性就开始写了吗
                 storeNode(tx, root, true);
             }
         }

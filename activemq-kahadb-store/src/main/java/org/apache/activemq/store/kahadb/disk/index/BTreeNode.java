@@ -163,6 +163,11 @@ public final class BTreeNode<Key,Value> {
             this.index = index;
         }
 
+        //首先写key的个数
+        //然后把所有的key写进去
+        //然后用一字节表示这个节点是否是分支节点
+        //如果是分支就把所有的child写进去
+        //否者的话就把所有的值写进去 所有的值写完之后再把下一个兄弟节点的pageId写进去
         public void writePayload(BTreeNode<Key,Value> node, DataOutput os) throws IOException {
             // Write the keys
             short count = (short)node.keys.length; // cast may truncate value...

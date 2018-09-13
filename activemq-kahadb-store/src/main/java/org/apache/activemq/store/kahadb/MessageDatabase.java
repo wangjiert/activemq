@@ -2324,6 +2324,7 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
         BTreeIndex<String, Long> messageIdIndex;
 
         // These bits are only set for Topics
+        //只有这个地址是主题时 才不为null
         BTreeIndex<String, KahaSubscriptionCommand> subscriptions;
         BTreeIndex<String, LastAck> subscriptionAcks;
         HashMap<String, MessageOrderCursor> subscriptionCursors;
@@ -2451,6 +2452,14 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
         }
 
         @Override
+        //先写orderIndex的默认级别的index的根节点id
+        //再写locationIndex的根结点id
+        //接着写messageIdIndex根结点的id
+        //接下来的一个字节表示这个地址是不是订阅地址
+        //如果是主题订阅 接下来写入主题相关的数据
+        //最后写入orderIndex的低级别和高级别的根结点id
+
+        //感觉还遗漏了很多信息没有记录 那么这些数据怎么来的呢
         public void writePayload(StoredDestination value, DataOutput dataOut) throws IOException {
             dataOut.writeLong(value.orderIndex.defaultPriorityIndex.getPageId());
             dataOut.writeLong(value.locationIndex.getPageId());

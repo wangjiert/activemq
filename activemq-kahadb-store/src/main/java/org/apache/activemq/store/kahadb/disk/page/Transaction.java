@@ -256,6 +256,7 @@ public class Transaction implements Iterable<Page> {
     public <T> void store(Page<T> page, Marshaller<T> marshaller, final boolean overflow) throws IOException {
         DataByteArrayOutputStream out = (DataByteArrayOutputStream)openOutputStream(page, overflow);
         if (marshaller != null) {
+            //只需要写数据  page的头信息流会在关闭的时候自己写
             marshaller.writePayload(page.get(), out);
         }
         out.close();

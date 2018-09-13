@@ -231,9 +231,11 @@ public class DataByteArrayOutputStream extends OutputStream implements DataOutpu
     @Override
     public void writeUTF(String text) throws IOException {
         long encodedsize = MarshallingSupport.countUTFBytes(text);
+        //必须要小于这个值的原因是 只会用两个字节来记录字符串长度 所以最长只有这么多
         if (encodedsize > 65535) {
             throw new UTFDataFormatException("encoded string too long: " + encodedsize + " bytes");
         }
+        //额外两个字节用来记录字符串总共的长度
         ensureEnoughBuffer((int)(pos + encodedsize + 2));
         writeShort((int)encodedsize);
 

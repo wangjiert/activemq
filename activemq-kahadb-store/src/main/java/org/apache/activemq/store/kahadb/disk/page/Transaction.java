@@ -453,6 +453,8 @@ public class Transaction implements Iterable<Page> {
         return new InputStream() {
 
             private ByteSequence chunk = new ByteSequence(new byte[pageFile.getPageSize()]);
+            //page和p是同一个东西啊
+            //如果是多个page的情况 会变
             private Page page = readPage(p);
             private int pageCount = 1;
 
@@ -462,12 +464,14 @@ public class Transaction implements Iterable<Page> {
             private Page readPage(Page page) throws IOException {
                 // Read the page data
 
+                //整页的数据都读出来
                 pageFile.readPage(page.getPageId(), chunk.getData());
 
                 chunk.setOffset(0);
                 chunk.setLength(pageFile.getPageSize());
 
                 DataByteArrayInputStream in = new DataByteArrayInputStream(chunk);
+                //读取前21字节
                 page.read(in);
 
                 chunk.setOffset(Page.PAGE_HEADER_SIZE);
@@ -543,6 +547,7 @@ public class Transaction implements Iterable<Page> {
                 }
             }
 
+            //如果还有下一页的话 这个没问题吗
             public int available() {
                 return chunk.length - chunk.offset;
             }

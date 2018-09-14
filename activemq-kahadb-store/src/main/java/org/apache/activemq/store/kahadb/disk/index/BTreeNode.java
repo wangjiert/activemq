@@ -400,6 +400,7 @@ public final class BTreeNode<Key,Value> {
             }
             
             try {
+                //万一key超过了三个 但是数据很小怎么办 这个就直接写超了啊
                 index.storeNode(tx, this, allowOverflow());
             } catch ( Transaction.PageOverflowIOException e ) {
                 // If we get an overflow 
@@ -442,6 +443,7 @@ public final class BTreeNode<Key,Value> {
         // Split the node into two nodes
         if( isBranch() ) {
 
+            //从中间分成两个数组 总数减一 因为需要上移一下
             leftKeys = createKeyArray(pivot);
             leftChildren = new long[leftKeys.length + 1];
             rightKeys = createKeyArray(vc - (pivot + 1));

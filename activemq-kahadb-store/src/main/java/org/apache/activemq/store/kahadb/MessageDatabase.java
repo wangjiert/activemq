@@ -3575,6 +3575,7 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
             }
         }
 
+        //就是找出下一个消息的内部id
         void configureLast(Transaction tx) throws IOException {
             // Figure out the next key using the last entry in the destination.
             TreeSet<Long> orderedSet = new TreeSet<>();

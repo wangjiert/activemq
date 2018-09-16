@@ -149,6 +149,7 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
         protected Location firstInProgressTransactionLocation;
         //接下来两个变量好像和后面两个瞬时变量有点猫腻啊
         //应该是把下面两个东西存在数据文件中 然后用location记录一下吧
+        //记录了下面审计对象存储的位置
         protected Location producerSequenceIdTrackerLocation = null;
         protected Location ackMessageFileMapLocation = null;
         protected transient ActiveMQMessageAuditNoSync producerSequenceIdTracker = new ActiveMQMessageAuditNoSync();

@@ -1828,6 +1828,7 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
                     @Override
                     public boolean isInterestedInKeysBetween(Location first, Location second) {
                         if( first==null ) {
+                            //叶子节点的数据是小于等于父级数据吗
                             SortedSet<Integer> subset = gcCandidateSet.headSet(second.getDataFileId()+1);
                             if( !subset.isEmpty() && subset.last() == second.getDataFileId() ) {
                                 subset.remove(second.getDataFileId());

@@ -153,7 +153,8 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
         protected Location producerSequenceIdTrackerLocation = null;
         protected Location ackMessageFileMapLocation = null;
         protected transient ActiveMQMessageAuditNoSync producerSequenceIdTracker = new ActiveMQMessageAuditNoSync();
-        //两个整形分别记录的什么呢
+        //两个整形分别记录的什么呢 都是文件id
+        //会不会key是文件id 值是这个文件里面的确认消息指向的消息所在的文件id
         protected transient Map<Integer, Set<Integer>> ackMessageFileMap = new HashMap<>();
         protected int version = VERSION;
         protected int openwireVersion = OpenWireFormat.DEFAULT_STORE_VERSION;

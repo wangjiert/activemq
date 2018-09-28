@@ -119,6 +119,7 @@ public class StoreQueueCursor extends AbstractPendingMessageCursor {
                 }
             }
             if (msg.isPersistent()) {
+                //感觉啥都没干 的确没什么存的 反正持久化的消息已经在存过一次了 只有非持久化的消息才有需要在文件或则内存中存放
                 result = persistent.addMessageLast(node);
             }
         }

@@ -355,12 +355,14 @@ public final class ListNode<Key, Value> {
             extension.store(tx, isAddFirst);
             this.setNext(extension.getPageId());
         } else {
+            //毕竟只增加了一个而已
             extension.setEntries(entries.getTail().getPrevious().splitAfter());
             extension.setNext(this.getNext());
             extension.store(tx, isAddFirst);
             getContainingList().setTailPageId(extension.getPageId());
             this.setNext(extension.getPageId());
         }
+        //如果
         store(tx, true);
     }
 

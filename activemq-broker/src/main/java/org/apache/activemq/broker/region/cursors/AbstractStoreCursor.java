@@ -43,6 +43,7 @@ public abstract class AbstractStoreCursor extends AbstractPendingMessageCursor i
     protected final Destination regionDestination;
     //已经读出来的消息吗
     //看来消息应该首先从这里面拿
+    //在重置的时候会从文件读到这里面
     protected final PendingList batchList;
     private Iterator<MessageReference> iterator = null;
     protected boolean batchResetNeeded = false;

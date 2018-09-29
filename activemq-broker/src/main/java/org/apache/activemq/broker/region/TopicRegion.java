@@ -122,6 +122,7 @@ public class TopicRegion extends AbstractRegion {
                 // Make sure the destination is created.
                 lookup(context, destination,true);
             }
+            //看一下订阅名是不是意味着一个消费者
             String clientId = context.getClientId();
             String subscriptionName = info.getSubscriptionName();
             SubscriptionKey key = new SubscriptionKey(clientId, subscriptionName);

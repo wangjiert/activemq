@@ -145,6 +145,7 @@ public class TcpTransportServer extends TransportServerThreadSupport implements 
             throw IOExceptionSupport.create("Failed to bind to server socket: " + bind + " due to: " + e, e);
         }
         try {
+            //这应该是就host有可能更改吧
             setConnectURI(new URI(bind.getScheme(), bind.getUserInfo(), resolveHostName(serverSocket, addr), serverSocket.getLocalPort(), bind.getPath(),
                 bind.getQuery(), bind.getFragment()));
         } catch (URISyntaxException e) {

@@ -104,6 +104,7 @@ public class KahaDBStore extends MessageDatabase implements PersistenceAdapter, 
     protected ExecutorService queueExecutor;
     protected ExecutorService topicExecutor;
     protected final List<Map<AsyncJobKey, StoreTask>> asyncQueueMaps = new LinkedList<Map<AsyncJobKey, StoreTask>>();
+    //每一个message store创建的时候都会把自己的map加进来
     protected final List<Map<AsyncJobKey, StoreTask>> asyncTopicMaps = new LinkedList<Map<AsyncJobKey, StoreTask>>();
     final WireFormat wireFormat = new OpenWireFormat();
     private SystemUsage usageManager;
@@ -872,12 +873,15 @@ public class KahaDBStore extends MessageDatabase implements PersistenceAdapter, 
     }
 
     class KahaDBTopicMessageStore extends KahaDBMessageStore implements TopicMessageStore {
+        //订阅数量
         private final AtomicInteger subscriptionCount = new AtomicInteger();
         protected final MessageStoreSubscriptionStatistics messageStoreSubStats =
                 new MessageStoreSubscriptionStatistics(isEnableSubscriptionStatistics());
 
         public KahaDBTopicMessageStore(ActiveMQTopic destination) throws IOException {
             super(destination);
+            //就是从pageindex里面读的
+            //这个对象难道不和metadata里面的storedestination对应吗
             this.subscriptionCount.set(getAllSubscriptions().length);
             if (isConcurrentStoreAndDispatchTopics()) {
                 asyncTopicMaps.add(asyncTaskMap);
@@ -979,6 +983,7 @@ public class KahaDBStore extends MessageDatabase implements PersistenceAdapter, 
                 pageFile.tx().execute(new Transaction.Closure<IOException>() {
                     @Override
                     public void execute(Transaction tx) throws IOException {
+                        //没有的话会被创建的
                         StoredDestination sd = getStoredDestination(dest, tx);
                         for (Iterator<Entry<String, KahaSubscriptionCommand>> iterator = sd.subscriptions.iterator(tx); iterator
                                 .hasNext();) {

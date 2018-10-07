@@ -140,9 +140,12 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
     private boolean blocked;
     private boolean connected;
     private boolean active;
+    //表示正在启动
     private final AtomicBoolean starting = new AtomicBoolean();
+    //表示准备关闭
     private final AtomicBoolean pendingStop = new AtomicBoolean();
     private long timeStamp;
+    //表示正在关闭中
     private final AtomicBoolean stopping = new AtomicBoolean(false);
     //在关闭之后会把这个东西减一
     private final CountDownLatch stopped = new CountDownLatch(1);
@@ -151,6 +154,7 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
     private final Map<ConsumerId, ConsumerBrokerExchange> consumerExchanges = new HashMap<>();
     private final CountDownLatch dispatchStoppedLatch = new CountDownLatch(1);
     //这个是会变的
+    //开启新事务的时候会变
     private ConnectionContext context;
     private boolean networkConnection;
     //为什么可以让一个activemq连接的属性改变这个变量的值
@@ -161,6 +165,8 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
     private DemandForwardingBridge duplexBridge;
     private final TaskRunnerFactory taskRunnerFactory;
     private final TaskRunnerFactory stopTaskRunnerFactory;
+    //连接状态里面应该包含了所有的会话状态吧
+    //这个连接对象是不是每个新的连接都对应一个呢
     private TransportConnectionStateRegister connectionStateRegister = new SingleTransportConnectionStateRegister();
     private final ReentrantReadWriteLock serviceLock = new ReentrantReadWriteLock();
     private String duplexNetworkConnectorId;
@@ -449,19 +455,28 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
 
     //为什么又有提交事务 又有终止事务呢 不是提交事务就相当于终止吗
     @Override
+    //返回值都没有的吗
     public Response processBeginTransaction(TransactionInfo info) throws Exception {
+        //从这里来看的话 创建连接之后就创建了事务吗  没看到事务包含会话id
         TransportConnectionState cs = lookupConnectionState(info.getConnectionId());
+        //为什么新事务的时候需要变呢 不同事务可能是同一个连接创建的嘛
         context = null;
         if (cs != null) {
+            //连接状态里面是有连接上下文的
             context = cs.getContext();
         }
+        //肯定是先建立了连接之后在新建的事务 所以这里肯定不会为空
         if (cs == null) {
             throw new NullPointerException("Context is null");
         }
         // Avoid replaying dup commands
+        //连接状态里面还有事务状态
         if (cs.getTransactionState(info.getTransactionId()) == null) {
+            //新建一个事务状态对象放到map里面
             cs.addTransactionState(info.getTransactionId());
+            //总结来说就是创建了事务对象 然后存到一个map里面
             broker.beginTransaction(context, info.getTransactionId());
+            //事务状态和事务对象直接没有直接的引用关系 但是都有事务id 所以是不是通过事务id来关联这两个对象呢
         }
         return null;
     }

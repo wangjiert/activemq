@@ -1699,6 +1699,7 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
             } else {
                 addAckLocationForRetroactiveSub(tx, sd, subscriptionKey);
             }
+            //topic消费的起始消息就是订阅创建时候的消息
             sd.subscriptionAcks.put(tx, subscriptionKey, new LastAck(ackLocation));
             sd.subscriptionCache.add(subscriptionKey);
         } else {
@@ -2329,13 +2330,21 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
         // These bits are only set for Topics
         //只有这个地址是主题时 才不为null
         BTreeIndex<String, KahaSubscriptionCommand> subscriptions;
+        //这个已经是记录了开始消费消息的位置
         BTreeIndex<String, LastAck> subscriptionAcks;
         HashMap<String, MessageOrderCursor> subscriptionCursors;
+        //从使用的代码看 感觉对于topic来说 只有消息添加进来就会有一个确认加进来
+        //这里面应该记录的是可以消费的消息把
+        //每次添加新消息的时候会把消息的id加进来
         ListIndex<String, SequenceSet> ackPositions;
+        //这个订阅添加命令的存放位置
         ListIndex<String, Location> subLocations;
 
         // Transient data used to track which Messages are no longer needed.
+        //每个消息被确认的次数
+        //每次确认的时候是在减1啊
         final TreeMap<Long, Long> messageReferences = new TreeMap<>();
+        //记录了所有的订阅名
         final HashSet<String> subscriptionCache = new LinkedHashSet<>();
 
         public void trackPendingAdd(Long seq) {
@@ -2632,6 +2641,7 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
                         if (!sequenceId.equals(lastPendingAck)) {
                             current = current.longValue() + 1;
                         } else {
+                            //为什么每个订阅的最后一个确认消息要保证确认次数为0
                             current = Long.valueOf(0L);
                         }
 
@@ -2646,6 +2656,7 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
                 rc.subscriptionCache.add(entry.getKey());
             }
 
+            //最开始就是0
             if (rc.orderIndex.nextMessageId == 0) {
                 // check for existing durable sub all acked out - pull next seq from acks as messages are gone
                 if (!rc.subscriptionAcks.isEmpty(tx)) {
@@ -2659,6 +2670,7 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
                 // update based on ackPositions for unmatched, last entry is always the next
                 if (!rc.messageReferences.isEmpty()) {
                     Long nextMessageId = (Long) rc.messageReferences.keySet().toArray()[rc.messageReferences.size() - 1];
+                    //为什么nextMessageId不加1呢 明明这个消息id已经被用过了
                     rc.orderIndex.nextMessageId =
                             Math.max(rc.orderIndex.nextMessageId, nextMessageId);
                 }
@@ -2874,6 +2886,7 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
     }
 
     // new sub is interested in potentially all existing messages
+    //是不是有点简单粗暴呀 不是有几种模式吗 这个直接把所有消息都加进来了
     private void addAckLocationForRetroactiveSub(Transaction tx, StoredDestination sd, String subscriptionKey) throws IOException {
         SequenceSet allOutstanding = new SequenceSet();
         Iterator<Map.Entry<String, SequenceSet>> iterator = sd.ackPositions.iterator(tx);

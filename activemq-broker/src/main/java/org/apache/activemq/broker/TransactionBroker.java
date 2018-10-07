@@ -223,6 +223,7 @@ public class TransactionBroker extends BrokerFilter {
 
     public void beginTransaction(ConnectionContext context, TransactionId xid) throws Exception {
         // the transaction may have already been started.
+        //xa事务和普通的事务怎么存放位置都变了呢
         if (xid.isXATransaction()) {
             XATransaction transaction = null;
             synchronized (xaTransactions) {
@@ -230,6 +231,8 @@ public class TransactionBroker extends BrokerFilter {
                 if (transaction != null) {
                     return;
                 }
+                //就目前而言貌似没发现两种事务的区别呀
+                //xa里面多存了一个broker对象 但是没存连接上下文 倒是存了连接id  两个应该差不多吧连接id应该可以找到连接状态
                 transaction = new XATransaction(transactionStore, (XATransactionId)xid, this, context.getConnectionId());
                 xaTransactions.put(xid, transaction);
             }

@@ -28,6 +28,8 @@ import org.apache.activemq.util.ServiceSupport;
  */
 public abstract class TransportServerSupport extends ServiceSupport implements TransportServer {
 
+    //初始化的时候下面两个值是一样的
+    //后来connctURI的值有更改
     private URI connectURI;
     private URI bindLocation;
     private TransportAcceptListener acceptListener;

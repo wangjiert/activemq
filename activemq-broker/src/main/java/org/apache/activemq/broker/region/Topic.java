@@ -163,6 +163,7 @@ public class Topic extends BaseDestination implements Task {
             }
         } else {
             DurableTopicSubscription dsub = (DurableTopicSubscription) sub;
+            //消费者数量加1
             super.addSubscription(context, sub);
             sub.add(context, this);
             if(dsub.isActive()) {

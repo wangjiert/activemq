@@ -201,6 +201,7 @@ public class BrokerService implements Service {
     private final AtomicBoolean started = new AtomicBoolean(false);
     private final AtomicBoolean stopped = new AtomicBoolean(false);
     private final AtomicBoolean stopping = new AtomicBoolean(false);
+    //这个钩子是什么呢
     private final AtomicBoolean preShutdownHooksInvoked = new AtomicBoolean(false);
     private BrokerPlugin[] plugins;
     private boolean keepDurableSubsActive = true;
@@ -260,6 +261,7 @@ public class BrokerService implements Service {
     private DestinationFilter virtualConsumerDestinationFilter;
 
     private final AtomicBoolean persistenceAdapterStarted = new AtomicBoolean(false);
+    //启动时候的异常
     private Throwable startException = null;
     private boolean startAsync = false;
     private Date startDate;
@@ -1269,6 +1271,7 @@ public class BrokerService implements Service {
         if (persistenceAdapter == null && !hasStartException()) {
             persistenceAdapter = createPersistenceAdapter();
             configureService(persistenceAdapter);
+            //什么都没做
             this.persistenceAdapter = registerPersistenceAdapterMBean(persistenceAdapter);
         }
         return persistenceAdapter;

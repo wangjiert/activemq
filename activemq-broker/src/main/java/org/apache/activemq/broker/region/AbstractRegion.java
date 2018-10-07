@@ -249,6 +249,7 @@ public abstract class AbstractRegion implements Region {
         }
     }
 
+    //新增一个地址时，遍历所有的订阅然后添加并返回所有找到的订阅
     protected List<Subscription> addSubscriptionsForDestination(ConnectionContext context, Destination dest) throws Exception {
         List<Subscription> rc = new ArrayList<Subscription>();
         // Add all consumers that are interested in the destination.
@@ -258,6 +259,7 @@ public abstract class AbstractRegion implements Region {
         for (Iterator<Subscription> iter = subscriptions.values().iterator(); iter.hasNext();) {
             Subscription sub = iter.next();
             //扫描所有的订阅者 找到订阅地址和添加的地址相同的订阅者
+            //从这里的逻辑判断的话  订阅的地址可能是个表达式 可以匹配多个地址
             if (sub.matches(dest.getActiveMQDestination())) {
                 try {
                     ConnectionContext originalContext = sub.getContext() != null ? sub.getContext() : context;

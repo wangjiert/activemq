@@ -431,6 +431,7 @@ public class RegionBroker extends EmptyBroker {
                 //已经在一个broker里面了 为什么还在通过连接上下文取broker 看来broker对象是不唯一的
                 //搞笑的吧 添加地址的时候已经调过这个方法了 现在添加消费者又来一次 是几个意思呢
                 context.getBroker().addDestination(context, destination, isAllowTempAutoCreationOnSend());
+                //没有创建新的订阅呀
                 getRegion(destination).addProducer(context, info);
             } finally {
                 inactiveDestinationsPurgeLock.readLock().unlock();

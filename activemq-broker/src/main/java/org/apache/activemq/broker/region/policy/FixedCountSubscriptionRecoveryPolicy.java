@@ -37,6 +37,7 @@ import org.apache.activemq.filter.DestinationFilter;
 public class FixedCountSubscriptionRecoveryPolicy implements SubscriptionRecoveryPolicy {
     private volatile MessageReference messages[];
     private int maximumSize = 100;
+    //应该是数组的指针把
     private int tail;
 
     public SubscriptionRecoveryPolicy copy() {

@@ -76,6 +76,7 @@ public abstract class PercentLimitUsage <T extends Usage> extends Usage<T> {
             } else if (directory != null) {
                 File dir = StoreUtil.findParentDirectory(directory);
                 if (dir != null) {
+                    //getTotalSpace返回的是分区的大小  这里来看的话 percentLimit应该是百分之多少
                     this.setLimit(dir.getTotalSpace() * percentLimit / 100);
                 }
             }

@@ -51,6 +51,7 @@ public abstract class Usage<T extends Usage> implements Service {
     //内存管理的使用对象中 这个监听器是queue对象实现的
     private final List<UsageListener> listeners = new CopyOnWriteArrayList<UsageListener>();
     private final boolean debug = LOG.isDebugEnabled();
+    //能够使用的最大量的百分比
     private float usagePortion = 1.0f;
     private final List<T> children = new CopyOnWriteArrayList<T>();
     //什么时候回调呢
@@ -167,6 +168,7 @@ public abstract class Usage<T extends Usage> implements Service {
         usageLock.writeLock().lock();
         try {
             this.limiter.setLimit(limit);
+            //为什么要清空呢
             this.usagePortion = 0;
         } finally {
             usageLock.writeLock().unlock();

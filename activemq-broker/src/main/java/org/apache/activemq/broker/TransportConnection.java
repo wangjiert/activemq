@@ -911,6 +911,7 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
             //这个东西本身好像是不干嘛的  只是一种消息 实现的功能还是靠消息处理的时候进行相应的操作
             ConnectionControl command = this.connector.getConnectionControl();
             command.setFaultTolerant(broker.isFaultTolerantConfiguration());
+            //为什么是错误重连的就不能够是负载均衡的呢
             if (info.isFailoverReconnect()) {
                 command.setRebalanceConnection(false);
             }

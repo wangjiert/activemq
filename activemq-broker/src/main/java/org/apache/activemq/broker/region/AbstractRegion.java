@@ -166,6 +166,7 @@ public abstract class AbstractRegion implements Region {
 
                     LOG.debug("{} adding destination: {}", broker.getBrokerName(), destination);
                     //创建了一个内部的地址
+                    //创建之后进行了初始化
                     dest = createDestination(context, destination);
                     // intercept if there is a valid interceptor defined
                     DestinationInterceptor destinationInterceptor = broker.getDestinationInterceptor();
@@ -174,7 +175,9 @@ public abstract class AbstractRegion implements Region {
                         dest = destinationInterceptor.intercept(dest);
                     }
                     //里面做了不少事啊
+                    //就是开启新的线程 定时清理超时的消息
                     dest.start();
+                    //添加个地址而已 怎么就开始添加订阅了
                     addSubscriptionsForDestination(context, dest);
                     destinations.put(destination, dest);
                     updateRegionDestCounts(destination, 1);

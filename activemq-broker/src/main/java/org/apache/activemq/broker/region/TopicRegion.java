@@ -253,6 +253,7 @@ public class TopicRegion extends AbstractRegion {
 
     @Override
     protected List<Subscription> addSubscriptionsForDestination(ConnectionContext context, Destination dest) throws Exception {
+        //返回符合新加地址的订阅
         List<Subscription> rc = super.addSubscriptionsForDestination(context, dest);
         Set<Subscription> dupChecker = new HashSet<Subscription>(rc);
 

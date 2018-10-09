@@ -92,6 +92,7 @@ public class Topic extends BaseDestination implements Task {
             DestinationStatistics parentStats, TaskRunnerFactory taskFactory) throws Exception {
         super(brokerService, store, destination, parentStats);
         this.topicStore = store;
+        //针对topic而言 好像是有这么一个新订阅来时可能会错过一些消息的处理机制
         subscriptionRecoveryPolicy = new RetainedMessageSubscriptionRecoveryPolicy(null);
         this.taskRunner = taskFactory.createTaskRunner(this, "Topic  " + destination.getPhysicalName());
         this.taskRunnerFactor = taskFactory;
@@ -110,6 +111,7 @@ public class Topic extends BaseDestination implements Task {
             // misleading metrics.
             // int messageCount = store.getMessageCount();
             // destinationStatistics.getMessages().setCount(messageCount);
+            //就是统计一下消息的个数以及消息的大小 没了
             store.start();
         }
     }
@@ -608,12 +610,17 @@ public class Topic extends BaseDestination implements Task {
     @Override
     public void start() throws Exception {
         if (started.compareAndSet(false, true)) {
+            //看来加一个地址之后首先就是把可能缺失的消息恢复一下
+            //默认的策略是什么都不做
+            //固定个数的策略好像也没做什么重要的事啊
+            //具体的工作应该是要调用recover
             this.subscriptionRecoveryPolicy.start();
             if (memoryUsage != null) {
                 memoryUsage.start();
             }
 
             if (getExpireMessagesPeriod() > 0 && !AdvisorySupport.isAdvisoryTopic(getActiveMQDestination())) {
+                //开始定期检查超时的消息吧
                 scheduler.executePeriodically(expireMessagesTask, getExpireMessagesPeriod());
             }
         }
@@ -674,6 +681,7 @@ public class Topic extends BaseDestination implements Task {
                     }
                 });
                 final ConnectionContext connectionContext = createConnectionContext();
+                //删除所有的超时消息
                 for (Message message : toExpire) {
                     for (DurableTopicSubscription sub : durableSubscribers.values()) {
                         if (!sub.isActive()) {
@@ -682,6 +690,7 @@ public class Topic extends BaseDestination implements Task {
                         }
                     }
                 }
+                //拿到所有消息之后还要通过恢复机制在拿点
                 Message[] msgs = subscriptionRecoveryPolicy.browse(getActiveMQDestination());
                 if (msgs != null) {
                     for (int i = 0; i < msgs.length && browseList.size() < max; i++) {
@@ -796,10 +805,12 @@ public class Topic extends BaseDestination implements Task {
         @Override
         public void run() {
             List<Message> browsedMessages = new InsertionCountList<Message>();
+            //貌似拿到所有的消息也没啥用啊
             doBrowse(browsedMessages, getMaxExpirePageSize());
             expiryTaskInProgress.set(false);
         }
     };
+    //定时任务里面的工作需要在新的线程里面完成 好像是如果工作比较耗时会影响下一次的任务的启动
     private final Runnable expireMessagesTask = new Runnable() {
         @Override
         public void run() {
@@ -811,6 +822,7 @@ public class Topic extends BaseDestination implements Task {
 
     @Override
     public void messageExpired(ConnectionContext context, Subscription subs, MessageReference reference) {
+        //发送消息到dlq
         broker.messageExpired(context, reference, subs);
         // AMQ-2586: Better to leave this stat at zero than to give the user
         // misleading metrics.

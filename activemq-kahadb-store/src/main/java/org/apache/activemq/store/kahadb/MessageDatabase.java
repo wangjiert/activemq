@@ -144,6 +144,7 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
         //最开始的时候是设置为关闭状态 什么时候改的呢
         protected int state;
         protected BTreeIndex<String, StoredDestination> destinations;
+        //最后一个消息写入的位置
         protected Location lastUpdate;
         //这个记录的是什么呢
         protected Location firstInProgressTransactionLocation;
@@ -2331,6 +2332,8 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
         //只有这个地址是主题时 才不为null
         BTreeIndex<String, KahaSubscriptionCommand> subscriptions;
         //这个已经是记录了开始消费消息的位置
+        //订阅最后确认消费的位置
+        //一个订阅添加时立马会有一个ack
         BTreeIndex<String, LastAck> subscriptionAcks;
         HashMap<String, MessageOrderCursor> subscriptionCursors;
         //从使用的代码看 感觉对于topic来说 只有消息添加进来就会有一个确认加进来
@@ -2343,6 +2346,7 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
         // Transient data used to track which Messages are no longer needed.
         //每个消息被确认的次数
         //每次确认的时候是在减1啊
+        //每个订阅的最后一个消息好像没什么用
         final TreeMap<Long, Long> messageReferences = new TreeMap<>();
         //记录了所有的订阅名
         final HashSet<String> subscriptionCache = new LinkedHashSet<>();
@@ -2508,6 +2512,7 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
 
     protected StoredDestination getStoredDestination(KahaDestination destination, Transaction tx) throws IOException {
         String key = key(destination);
+        //那么问题来了 这个集合会由于数量过多而丢一些数据吗
         StoredDestination rc = storedDestinations.get(key);
         if (rc == null) {
             boolean topic = destination.getType() == KahaDestination.DestinationType.TOPIC || destination.getType() == KahaDestination.DestinationType.TEMP_TOPIC;
@@ -2624,6 +2629,7 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
             }
 
             // Configure the message references index
+            //这里因该是可以读取的消息
             Iterator<Entry<String, SequenceSet>> subscriptions = rc.ackPositions.iterator(tx);
             while (subscriptions.hasNext()) {
                 Entry<String, SequenceSet> subscription = subscriptions.next();
@@ -2631,13 +2637,18 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
                 if (pendingAcks != null && !pendingAcks.isEmpty()) {
                     Long lastPendingAck = pendingAcks.getTail().getLast();
                     for (Long sequenceId : pendingAcks) {
+                        //就是把所有的订阅遍历一遍 然后把每个订阅里面的消息需要确认的次数加一
+                        //相当于于在统计一个消息需要被确认的次数
                         Long current = rc.messageReferences.get(sequenceId);
                         if (current == null) {
+                            //为什么是从0开始的呢
+                            //需要研究一下 可能用的时候就是0开始的呢
                             current = new Long(0);
                         }
 
                         // We always add a trailing empty entry for the next position to start from
                         // so we need to ensure we don't count that as a message reference on reload.
+                        //往后面看吧 最后一个有点东西的
                         if (!sequenceId.equals(lastPendingAck)) {
                             current = current.longValue() + 1;
                         } else {
@@ -2662,12 +2673,16 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
                 if (!rc.subscriptionAcks.isEmpty(tx)) {
                     for (Iterator<Entry<String, LastAck>> iterator = rc.subscriptionAcks.iterator(tx); iterator.hasNext();) {
                         Entry<String, LastAck> entry = iterator.next();
+                        //为什么用确认的消息来算呢  用每个订阅拥有的消息来算不是更好吗
+                        //还是说理解错了呢  确认记录的并不是订阅获取消息之后的确认
                         rc.orderIndex.nextMessageId =
                                 Math.max(rc.orderIndex.nextMessageId, entry.getValue().lastAckedSequence +1);
                     }
                 }
             } else {
                 // update based on ackPositions for unmatched, last entry is always the next
+                //最后一个消息直接还可以重用的  所以说最后一个消息到底是怎么加进去的呢
+                //可能需要看下这个方法什么情况下会被调用
                 if (!rc.messageReferences.isEmpty()) {
                     Long nextMessageId = (Long) rc.messageReferences.keySet().toArray()[rc.messageReferences.size() - 1];
                     //为什么nextMessageId不加1呢 明明这个消息id已经被用过了
@@ -3549,6 +3564,7 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
         BTreeIndex<Long, MessageKeys> lowPriorityIndex;
         BTreeIndex<Long, MessageKeys> highPriorityIndex;
         //应该和数据库中的游标功能一样吧
+        //在什么时候会增长呢
         final MessageOrderCursor cursor = new MessageOrderCursor();
         //这个难道是不是记录的下一个消息的内部id吗
         //看来这个很可能为空啊 停止迭代的时候会把下面三个变量设为空然后把实际记录的值赋值给cursor
@@ -3795,6 +3811,7 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
             final Iterator<Entry<Long, MessageKeys>>lowIterator;
 
             MessageOrderIterator(Transaction tx, MessageOrderCursor m, MessageOrderIndex messageOrderIndex) throws IOException {
+                //找到最小的正在添加的消息  意味着消息不能超过这个
                 Long pendingAddLimiter = messageOrderIndex.minPendingAdd();
                 this.defaultIterator = defaultPriorityIndex.iterator(tx, m.defaultCursorPosition, pendingAddLimiter);
                 if (highPriorityIndex != null) {

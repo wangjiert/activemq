@@ -110,6 +110,7 @@ public class DurableTopicSubscription extends PrefetchSubscription implements Us
     @Override
     public void add(ConnectionContext context, Destination destination) throws Exception {
         if (!destinations.contains(destination)) {
+            //没发现往storedestination加什么
             super.add(context, destination);
         }
         // do it just once per destination

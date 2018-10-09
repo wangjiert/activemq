@@ -656,6 +656,7 @@ public class KahaDBStore extends MessageDatabase implements PersistenceAdapter, 
                     @Override
                     public void execute(Transaction tx) throws Exception {
                         StoredDestination sd = getStoredDestination(dest, tx);
+                        //首先恢复回滚的消息
                         recoverRolledBackAcks(sd, tx, Integer.MAX_VALUE, listener);
                         sd.orderIndex.resetCursorPosition();
                         for (Iterator<Entry<Long, MessageKeys>> iterator = sd.orderIndex.iterator(tx); listener.hasSpace() && iterator
@@ -882,8 +883,10 @@ public class KahaDBStore extends MessageDatabase implements PersistenceAdapter, 
             super(destination);
             //就是从pageindex里面读的
             //这个对象难道不和metadata里面的storedestination对应吗
+            //搞这么多事 就只要了个长度 那为什么要把订阅信息加载出来反正也没缓存
             this.subscriptionCount.set(getAllSubscriptions().length);
             if (isConcurrentStoreAndDispatchTopics()) {
+                //就是把这个map暴露给全局的map
                 asyncTopicMaps.add(asyncTaskMap);
             }
         }
@@ -980,6 +983,7 @@ public class KahaDBStore extends MessageDatabase implements PersistenceAdapter, 
             final ArrayList<SubscriptionInfo> subscriptions = new ArrayList<SubscriptionInfo>();
             indexLock.writeLock().lock();
             try {
+                //每次调用都加载一次 是不是不太好呢
                 pageFile.tx().execute(new Transaction.Closure<IOException>() {
                     @Override
                     public void execute(Transaction tx) throws IOException {
@@ -1041,6 +1045,7 @@ public class KahaDBStore extends MessageDatabase implements PersistenceAdapter, 
                         public Integer execute(Transaction tx) throws IOException {
                             StoredDestination sd = getStoredDestination(dest, tx);
                             LastAck cursorPos = getLastAck(tx, sd, subscriptionKey);
+                            //为什么要通过消息确认来判断是否有消息呢
                             if (cursorPos == null) {
                                 // The subscription might not exist.
                                 return 0;

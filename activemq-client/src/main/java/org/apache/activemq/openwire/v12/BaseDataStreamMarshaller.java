@@ -152,14 +152,21 @@ public abstract class BaseDataStreamMarshaller implements DataStreamMarshaller {
         }
     }
 
+    //如果支持缓存的话:
+        //缓存里面有了加返回2 应该就是表示数据在缓存中的索引位置
+        //缓存里面没有的话就返回2加数据类型的一字节和数据本身的长度
+    //不支持缓存的话 返回数据类型的一字节加上数据本身的长度
     protected int tightMarshalCachedObject1(OpenWireFormat wireFormat, DataStructure o, BooleanStream bs)
         throws IOException {
         if (wireFormat.isCacheEnabled()) {
             Short index = wireFormat.getMarshallCacheIndex(o);
             bs.writeBoolean(index == null);
             if (index == null) {
+                //如果数据为null返回0
+                //否者返回1+数据本身的长度
                 int rc = wireFormat.tightMarshalNestedObject1(o, bs);
                 wireFormat.addToMarshallCache(o);
+                //加2是不是表示缓存中索引的值用的
                 return 2 + rc;
             } else {
                 return 2;
@@ -298,6 +305,8 @@ public abstract class BaseDataStreamMarshaller implements DataStreamMarshaller {
         }
     }
 
+    //为空就返回0
+    //否者返回字符串总字节数的两字节加上数据本身所需长度
     protected int tightMarshalString1(String value, BooleanStream bs) throws IOException {
         bs.writeBoolean(value != null);
         if (value != null) {
@@ -415,6 +424,7 @@ public abstract class BaseDataStreamMarshaller implements DataStreamMarshaller {
         return rc;
     }
 
+    //返回数据长度的4字节加上数据本身长度
     protected int tightMarshalByteSequence1(ByteSequence data, BooleanStream bs) throws IOException {
         bs.writeBoolean(data != null);
         if (data != null) {

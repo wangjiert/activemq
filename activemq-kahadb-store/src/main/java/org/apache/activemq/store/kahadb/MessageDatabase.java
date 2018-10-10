@@ -2339,6 +2339,7 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
         //从使用的代码看 感觉对于topic来说 只有消息添加进来就会有一个确认加进来
         //这里面应该记录的是可以消费的消息把
         //每次添加新消息的时候会把消息的id加进来
+        //最后的一个消息id是目前还没有的消息
         ListIndex<String, SequenceSet> ackPositions;
         //这个订阅添加命令的存放位置
         ListIndex<String, Location> subLocations;
@@ -2347,6 +2348,7 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
         //每个消息被确认的次数
         //每次确认的时候是在减1啊
         //每个订阅的最后一个消息好像没什么用
+        //每次都把下一个消息的引用数设为0, 也就是有消息进来的时候就会变成1, 0表示这个消息还没有
         final TreeMap<Long, Long> messageReferences = new TreeMap<>();
         //记录了所有的订阅名
         final HashSet<String> subscriptionCache = new LinkedHashSet<>();

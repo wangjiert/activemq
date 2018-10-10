@@ -53,6 +53,12 @@ public final class MarshallingSupport {
 
     private MarshallingSupport() {}
 
+    //写map规则:
+        //首先是四个字节表示map的长度 如果是-1表示空
+        //然后是写入字符串
+            //写字符串规则:
+                //先写入两个字节表示字符串所需要的总字节长度,接着写入每个字符的字节
+        //根据具体的值写入值
     public static void marshalPrimitiveMap(Map<String, Object> map, DataOutputStream out) throws IOException {
         if (map == null) {
             out.writeInt(-1);
@@ -121,6 +127,11 @@ public final class MarshallingSupport {
         return answer;
     }
 
+    //首先写入一个字节表示值的类型 0表示null
+    //然后写入值
+    //值是数组的话 在写入类型之后会写入数组的长度
+    //值是字符串的话 根据具体的长度可能直接用utf写入或者自己模仿utf写
+    //值是list的话首先写入list的长度 然后写入具体的元素
     public static void marshalPrimitive(DataOutputStream out, Object value) throws IOException {
         if (value == null) {
             marshalNull(out);

@@ -64,9 +64,12 @@ public abstract class BaseCommandMarshaller extends BaseDataStreamMarshaller {
 
         BaseCommand info = (BaseCommand)o;
 
+        //什么都没做
         int rc = super.tightMarshal1(wireFormat, o, bs);
+        //在流里面写入一位表示是否需要恢复
         bs.writeBoolean(info.isResponseRequired());
 
+        //这四个字节是用来写commandid
         return rc + 4;
     }
 

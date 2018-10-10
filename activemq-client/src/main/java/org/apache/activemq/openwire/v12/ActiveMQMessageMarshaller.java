@@ -73,6 +73,7 @@ public class ActiveMQMessageMarshaller extends MessageMarshaller {
      */
     public int tightMarshal1(OpenWireFormat wireFormat, Object o, BooleanStream bs) throws IOException {
 
+        //有多余的13字节不知道在干什么
         int rc = super.tightMarshal1(wireFormat, o, bs);
 
         return rc + 0;

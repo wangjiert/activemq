@@ -24,8 +24,11 @@ import java.nio.ByteBuffer;
 public final class BooleanStream {
 
     byte data[] = new byte[48];
+    //表示已经有几个索引有值
     short arrayLimit;
+    //看来这个表示data的索引
     short arrayPos;
+    //看来这个表示对于data当前索引表示的byte用到了第几位
     byte bytePos;
 
     public boolean readBoolean() throws IOException {

@@ -45,6 +45,7 @@ public class ActiveMQTextMessage extends ActiveMQMessage implements TextMessage 
 
     public static final byte DATA_STRUCTURE_TYPE = CommandTypes.ACTIVEMQ_TEXT_MESSAGE;
 
+    //这应该记录的就是这个消息具体的值吧
     protected String text;
 
     @Override
@@ -128,6 +129,7 @@ public class ActiveMQTextMessage extends ActiveMQMessage implements TextMessage 
     }
 
     @Override
+    //就是把text的值序列化之后赋给content
     public void storeContent() {
         try {
             ByteSequence content = getContent();

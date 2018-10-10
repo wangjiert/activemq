@@ -119,8 +119,10 @@ public abstract class MessageMarshaller extends BaseCommandMarshaller {
 
         Message info = (Message)o;
 
+        //对于text消息总的来说做了两件事 首先把properties序列化然后把text序列化
         info.beforeMarshall(wireFormat);
 
+        //为什么返回4
         int rc = super.tightMarshal1(wireFormat, o, bs);
         rc += tightMarshalCachedObject1(wireFormat, (DataStructure)info.getProducerId(), bs);
         rc += tightMarshalCachedObject1(wireFormat, (DataStructure)info.getDestination(), bs);
@@ -150,6 +152,7 @@ public abstract class MessageMarshaller extends BaseCommandMarshaller {
         rc+=tightMarshalLong1(wireFormat, info.getBrokerOutTime(), bs);
         bs.writeBoolean(info.isJMSXGroupFirstForConsumer());
 
+        //多加的9又是什么
         return rc + 9;
     }
 

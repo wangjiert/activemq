@@ -592,6 +592,7 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
 
     @Override
     //新加入消息
+    //怎么感觉topic有点问题呢 每个消息都是每个订阅都有一份 这样的话不是很浪费内存吗
     public Response processMessage(Message messageSend) throws Exception {
         ProducerId producerId = messageSend.getProducerId();
         ProducerBrokerExchange producerExchange = getProducerBrokerExchange(producerId);

@@ -212,17 +212,22 @@ public final class OpenWireFormat implements WireFormat {
             runMarshallCacheEvictionSweep();
         }
 
+        //一个字节应该就是表示这个消息的类型
         int size = 1;
         if (o != null) {
 
             DataStructure c = (DataStructure)o;
+            //第一步就是根据消息的type找出对应的marshall
             byte type = c.getDataStructureType();
             DataStreamMarshaller dsm = dataMarshallers[type & 0xFF];
             if (dsm == null) {
                 throw new IOException("Unknown data type: " + type);
             }
+            //这个还分两种啊
+            //看上去分为压缩的和不压缩的
             if (tightEncodingEnabled) {
                 BooleanStream bs = new BooleanStream();
+                //这个消息需要的字节数
                 size += dsm.tightMarshal1(this, c, bs);
                 size += bs.marshalledSize();
 
@@ -232,6 +237,7 @@ public final class OpenWireFormat implements WireFormat {
 
                 dataOut.writeByte(type);
                 bs.marshal(dataOut);
+                //还有9字节呢
                 dsm.tightMarshal2(this, c, dataOut, bs);
 
             } else {
@@ -379,9 +385,11 @@ public final class OpenWireFormat implements WireFormat {
     public int tightMarshalNestedObject1(DataStructure o, BooleanStream bs) throws IOException {
         bs.writeBoolean(o != null);
         if (o == null) {
+            //可以通过bool流知道这里是否有值 所以如果值为空可以直接返回0
             return 0;
         }
 
+        //这是干什么呢
         if (o.isMarshallAware()) {
             // MarshallAware ma = (MarshallAware)o;
             ByteSequence sequence = null;
@@ -397,6 +405,8 @@ public final class OpenWireFormat implements WireFormat {
         if (dsm == null) {
             throw new IOException("Unknown data type: " + type);
         }
+        //这个加1感觉是表示数据里面要一字节表示数据类型
+        //挺合理的 相当于返回数据类型花费长度和数据本身花费的长度
         return 1 + dsm.tightMarshal1(this, o, bs);
     }
 

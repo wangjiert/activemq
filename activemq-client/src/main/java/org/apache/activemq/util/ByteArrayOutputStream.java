@@ -66,6 +66,7 @@ public class ByteArrayOutputStream extends OutputStream {
         size = 0;
     }
 
+    //为啥要引用同样的底层数组呢
     public ByteSequence toByteSequence() {
         return new ByteSequence(buffer, 0, size);
     }
@@ -75,7 +76,8 @@ public class ByteArrayOutputStream extends OutputStream {
         System.arraycopy(buffer, 0, rc, 0, size);
         return rc;
     }
-    
+
+
     public int size() {
         return size;
     }

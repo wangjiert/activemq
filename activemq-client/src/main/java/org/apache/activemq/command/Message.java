@@ -79,10 +79,12 @@ public abstract class Message extends BaseCommand implements MarshallAware, Mess
     protected String groupID;
     protected int groupSequence;
     protected ConsumerId targetConsumerId;
+    //消息内容是否被压缩
     protected boolean compressed;
     protected String userID;
 
     protected ByteSequence content;
+    //这个东西就是properties序列化之后的字节数组
     protected ByteSequence marshalledProperties;
     protected DataStructure dataStructure;
     protected int redeliveryCounter;
@@ -90,6 +92,7 @@ public abstract class Message extends BaseCommand implements MarshallAware, Mess
     protected int size;
     protected Map<String, Object> properties;
     protected boolean readOnlyProperties;
+    //消息的主体是否可以更改
     protected boolean readOnlyBody;
     //记录的信息真是多啊 发送的时候感觉就设置了一个内容而已
     //这个消息都是不能持久化的属性 那就是收到这个消息之后自己设置的呗
@@ -262,6 +265,7 @@ public abstract class Message extends BaseCommand implements MarshallAware, Mess
     }
 
     @Override
+    //就是把properties序列化之后的值赋给marshalledProperties
 	public void beforeMarshall(WireFormat wireFormat) throws IOException {
         // Need to marshal the properties.
         if (marshalledProperties == null && properties != null) {

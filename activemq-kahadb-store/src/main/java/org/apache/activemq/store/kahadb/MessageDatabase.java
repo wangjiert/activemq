@@ -1105,7 +1105,10 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
     }
 
     public ByteSequence toByteSequence(JournalCommand<?> data) throws IOException {
+        //这个长度里面没有看到数据类型的占位呀
         int size = data.serializedSizeFramed();
+        //原来在这里加了类型
+        //也就是先是一个字节记录了数据类型 然后才是数据长度和具体的数据
         DataByteArrayOutputStream os = new DataByteArrayOutputStream(size + 1);
         os.writeByte(data.type().getNumber());
         data.writeFramed(os);

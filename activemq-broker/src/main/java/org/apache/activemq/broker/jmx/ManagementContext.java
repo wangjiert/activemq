@@ -76,13 +76,16 @@ public class ManagementContext implements Service {
     public static final boolean DEFAULT_CREATE_CONNECTOR;
 
     private static final Logger LOG = LoggerFactory.getLogger(ManagementContext.class);
+    //jmx服务端
     private MBeanServer beanServer;
+    //jmx bean的命名规则:   域名+属性列表
     private String jmxDomainName = DEFAULT_DOMAIN;
     private boolean useMBeanServer = true;
     private boolean createMBeanServer = true;
     private boolean locallyCreateMBeanServer;
     private boolean createConnector = DEFAULT_CREATE_CONNECTOR;
     private boolean findTigerMbeanServer = true;
+    //应该是绑定mbean server的ip
     private String connectorHost = "localhost";
     private int connectorPort = 1099;
     private Map<String, ?> environment;
@@ -95,7 +98,9 @@ public class ManagementContext implements Service {
     private Registry registry;
     private final Map<ObjectName, ObjectName> registeredMBeanNames = new ConcurrentHashMap<ObjectName, ObjectName>();
     private boolean allowRemoteAddressInMBeanNames = true;
+    //应该是一个broker对应一个jmx服务管理对象吧  这个值就是对应的broker名字
     private String brokerName;
+    //用逗号分割的字符串, 表示不需要管理的bean name,初始化的时候会用这个变量的值去创建ObjectName对象加到下面的变量中
     private String suppressMBean;
     private List<ObjectName> suppressMBeanList;
 

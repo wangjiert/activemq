@@ -50,6 +50,7 @@ public class Main {
     private File activeMQBase;
     private ClassLoader classLoader;
     private final Set<File> extensions = new LinkedHashSet<File>();
+    //所有的class路径
     private final Set<File> activeMQClassPath = new LinkedHashSet<File>();
 
     public static void main(String[] args) {

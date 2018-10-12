@@ -100,6 +100,7 @@ public class DestinationMap {
             }
             return;
         }
+        //怎么没处理空字符串呢
         String[] paths = key.getDestinationPaths();
         getRootNode(key).add(paths, 0, value);
     }

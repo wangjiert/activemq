@@ -134,8 +134,10 @@ public class DestinationMapNode implements DestinationNode {
         return answer;
     }
 
+    //idx表示当前在树的第几级 而paths.length表示的是这个节点应该在第几级
     public void add(String[] paths, int idx, Object value) {
         //等于是可以理解的  但是大于是为什么呢
+        //这个方法就是不停的迭代调用 所以肯定不会出现idx>paths.length
         if (idx >= paths.length) {
             values.add(value);
         } else {
@@ -143,6 +145,7 @@ public class DestinationMapNode implements DestinationNode {
         }
     }
 
+    //貌似没有人用这个方法呀
     public void set(String[] paths, int idx, Object value) {
         if (idx >= paths.length) {
             values.clear();
@@ -208,9 +211,12 @@ public class DestinationMapNode implements DestinationNode {
      * Matches any entries in the map containing wildcards
      */
     @SuppressWarnings({ "rawtypes", "unchecked" })
+    //这相当于在走一个特殊的树路径
     public void appendMatchingWildcards(Set answer, String[] paths, int idx) {
         //idx表示的是这个节点的下一个节点的index, 根节点没有index
         //这个应该不会成立吧
+        //理论上讲 idx是等于pathLength的
+        //减1应该是因为下面有个+1吧
         if (idx - 1 > pathLength) {
             return;
         }
@@ -218,6 +224,7 @@ public class DestinationMapNode implements DestinationNode {
         if (wildCardNode != null) {
             wildCardNode.appendMatchingValues(answer, paths, idx + 1);
         }
+        //所有的子类很简单 就是先把这个简单的值全加进去然后把这个节点的所有子类加进去
         wildCardNode = getChild(ANY_DESCENDENT);
         if (wildCardNode != null) {
             // for a wildcard Node match, add all values of the descendant node
@@ -237,15 +244,20 @@ public class DestinationMapNode implements DestinationNode {
         //如果找到了一个>, 并且deep为true时就把这个变量设为false
         boolean couldMatchAny = true;
         int size = paths.length;
+        //加上node!=null是因为有多个分支的情况
+        //也有可能是因为这个key根本不存在
         for (int i = startIndex; i < size && node != null; i++) {
             String path = paths[i];
             if (deep && path.equals(ANY_DESCENDENT)) {
                 //node永远是这个path对应的节点的上一个node
+                //加所有子节点时 并没有加这个节点本身 循环的外面会加
                 answer.addAll(node.getDesendentValues());
+                //为嘛加了所有的子节点之后就不能在加这个了呢
                 couldMatchAny = false;
                 break;
             }
 
+            //哇哦 看起来只会拿符合完整路径的最后一个节点的值
             node.appendMatchingWildcards(answer, paths, i);
 
             if (path.equals(ANY_CHILD)) {

@@ -321,6 +321,7 @@ public abstract class ActiveMQDestination extends JNDIBaseStorable implements Da
         }
         l.add(level.toString());
 
+        //l里面应该有不少的空字符串吧
         destinationPaths = new String[l.size()];
         l.toArray(destinationPaths);
         return destinationPaths;

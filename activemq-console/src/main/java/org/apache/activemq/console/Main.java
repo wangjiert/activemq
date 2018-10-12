@@ -49,6 +49,7 @@ public class Main {
     private File activeMQHome;
     private File activeMQBase;
     private ClassLoader classLoader;
+    //扩展jar包目录
     private final Set<File> extensions = new LinkedHashSet<File>();
     //所有的class路径
     private final Set<File> activeMQClassPath = new LinkedHashSet<File>();
@@ -110,6 +111,7 @@ public class Main {
 
         // Add any custom classpath specified from the system property
         // activemq.classpath
+        //这个方法有问题吧 分隔符明明是:
         app.addClassPathList(System.getProperty("activemq.classpath"));
 
         try {
@@ -163,6 +165,7 @@ public class Main {
         return depth;
     }
 
+    //做了两件事, 找到指定的额外路径,决定是否使用扩展路径
     public void parseExtensions(List<String> tokens) {
         if (tokens.isEmpty()) {
             return;
@@ -292,6 +295,7 @@ public class Main {
      */
     public boolean canUseExtdir() {
         try {
+            //这个jar包里面只有一个Main.class 所以肯定找不到TASK_DEFAULT_CLASS
             Main.class.getClassLoader().loadClass(TASK_DEFAULT_CLASS);
             return false;
         } catch (ClassNotFoundException e) {
@@ -299,6 +303,7 @@ public class Main {
         }
     }
 
+    //很nb的方法 直接改变了classLoader寻找class文件的路径
     public ClassLoader getClassLoader() throws MalformedURLException {
         if (classLoader == null) {
             // Setup the ClassLoader

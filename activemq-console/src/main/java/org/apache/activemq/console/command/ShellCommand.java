@@ -25,6 +25,7 @@ import java.util.*;
 
 public class ShellCommand extends AbstractCommand {
 
+    //还有交互式的 也是nb啊
     private boolean interactive;
     private String[] helpFile;
 

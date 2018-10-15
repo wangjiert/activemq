@@ -679,6 +679,7 @@ public class Transaction implements Iterable<Page> {
             // Actually do the page writes...
             pageFile.write(writes.entrySet());
             // Release the pages that were freed up in the transaction..
+            //并没有真正的释放  恢复的时候又是根据page type决定释放是free 那么这些free page不就浪费了吗
             freePages(freeList);
 
             freeList.clear();

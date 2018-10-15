@@ -134,6 +134,7 @@ public class PageFile {
     //表示是否需要停掉异步写的线程
     private final AtomicBoolean stopWriter = new AtomicBoolean();
     private Thread writerThread;
+    //异步线程每次写的时候都会清空这个
     private CountDownLatch checkpointLatch;
 
     // Keeps track of writes that are being written to disk.

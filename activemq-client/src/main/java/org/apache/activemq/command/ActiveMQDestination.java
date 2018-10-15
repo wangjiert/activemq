@@ -241,6 +241,7 @@ public abstract class ActiveMQDestination extends JNDIBaseStorable implements Da
         return physicalName;
     }
 
+    //就这个方法看来 组合地址的条件是公用的
     public void setPhysicalName(String physicalName) {
         physicalName = physicalName.trim();
         final int length = physicalName.length();

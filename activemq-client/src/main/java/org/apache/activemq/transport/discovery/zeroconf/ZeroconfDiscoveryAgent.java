@@ -55,6 +55,7 @@ public class ZeroconfDiscoveryAgent implements DiscoveryAgent, ServiceListener {
     private String typeSuffix = TYPE_SUFFIX;
 
     private DiscoveryListener listener;
+    //这个有什么用呢
     private String group = "default";
     private final CopyOnWriteArrayList<ServiceInfo> serviceInfos =
         new CopyOnWriteArrayList<ServiceInfo>();

@@ -33,6 +33,7 @@ public class ShellCommand extends AbstractCommand {
         this(false);
     }
 
+    //就是生成了帮助信息
     public ShellCommand(boolean interactive) {
         this.interactive = interactive;
         ArrayList<String> help = new ArrayList<String>();

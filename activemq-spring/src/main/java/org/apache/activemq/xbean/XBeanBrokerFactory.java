@@ -57,6 +57,7 @@ public class XBeanBrokerFactory implements BrokerFactoryHandler {
         this.validate = validate;
     }
 
+    //uri上的条件配置的是broker factory
     public BrokerService createBroker(URI config) throws Exception {
         String uri = config.getSchemeSpecificPart();
         if (uri.lastIndexOf('?') != -1) {

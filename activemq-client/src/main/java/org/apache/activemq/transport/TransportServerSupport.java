@@ -30,6 +30,7 @@ public abstract class TransportServerSupport extends ServiceSupport implements T
 
     //初始化的时候下面两个值是一样的
     //后来connctURI的值有更改
+    //bind地址可能会有0.0.0.0 connect地址会转换成某一个具体的地址
     private URI connectURI;
     private URI bindLocation;
     private TransportAcceptListener acceptListener;
@@ -39,6 +40,7 @@ public abstract class TransportServerSupport extends ServiceSupport implements T
     public TransportServerSupport() {
     }
 
+    //这个location应该是socket监听的uri
     public TransportServerSupport(URI location) {
         this.connectURI = location;
         this.bindLocation = location;

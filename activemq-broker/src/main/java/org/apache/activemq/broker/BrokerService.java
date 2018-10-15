@@ -201,7 +201,7 @@ public class BrokerService implements Service {
     private final AtomicBoolean started = new AtomicBoolean(false);
     private final AtomicBoolean stopped = new AtomicBoolean(false);
     private final AtomicBoolean stopping = new AtomicBoolean(false);
-    //这个钩子是什么呢
+    //记录是否调用了关闭钩子把
     private final AtomicBoolean preShutdownHooksInvoked = new AtomicBoolean(false);
     private BrokerPlugin[] plugins;
     private boolean keepDurableSubsActive = true;
@@ -226,6 +226,7 @@ public class BrokerService implements Service {
     private final CountDownLatch stoppedLatch = new CountDownLatch(1);
     private final CountDownLatch startedLatch = new CountDownLatch(1);
     private Broker regionBroker;
+    //生产者占系统资源的多少
     private int producerSystemUsagePortion = 60;
     private int consumerSystemUsagePortion = 40;
     private boolean splitSystemUsageForProducersConsumers;
@@ -1246,6 +1247,7 @@ public class BrokerService implements Service {
             if (splitSystemUsageForProducersConsumers) {
                 producerSystemUsage = new SystemUsage(getSystemUsage(), "Producer");
                 float portion = producerSystemUsagePortion / 100f;
+                //只有内存是单独自己用一份
                 producerSystemUsage.getMemoryUsage().setUsagePortion(portion);
                 addService(producerSystemUsage);
             } else {

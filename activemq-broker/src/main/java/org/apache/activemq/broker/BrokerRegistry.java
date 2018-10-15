@@ -29,6 +29,8 @@ import org.slf4j.LoggerFactory;
 public class BrokerRegistry {
 
     private static final Logger LOG = LoggerFactory.getLogger(BrokerRegistry.class);
+    //静态变量 所以一个虚拟机都只有一个
+    //但是一个虚拟机不是只启动一个broker吗
     private static final BrokerRegistry INSTANCE = new BrokerRegistry();
 
     private final Object mutex = new Object();

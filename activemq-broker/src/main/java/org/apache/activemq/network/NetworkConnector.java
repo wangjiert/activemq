@@ -49,6 +49,7 @@ import org.slf4j.LoggerFactory;
 public abstract class NetworkConnector extends NetworkBridgeConfiguration implements Service {
 
     private static final Logger LOG = LoggerFactory.getLogger(NetworkConnector.class);
+    //vm://broker name
     protected URI localURI;
     protected ConnectionFilter connectionFilter;
     protected ConcurrentMap<URI, NetworkBridge> bridges = new ConcurrentHashMap<URI, NetworkBridge>();

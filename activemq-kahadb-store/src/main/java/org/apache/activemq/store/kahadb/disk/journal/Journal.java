@@ -137,7 +137,7 @@ public class Journal {
 
     public enum PreallocationScope {
         ENTIRE_JOURNAL,
-        ENTIRE_JOURNAL_ASYNC,
+        ENTIRE_JOURNAL_ASYNC,//这个是创建一个datafile的时候会直接创建下一个
         NONE;
     }
 
@@ -386,6 +386,7 @@ public class Journal {
         int lastFileLength = dataFiles.getTail().getLength();
         //这是不是有问题啊 location记录的不一定是最后一个文件的偏移量啊
         if (totalLength.get() > lastFileLength && lastAppendLocation.get().getOffset() > 0) {
+            //不是应该偏移量大于文件长度吗 所以这里是不是写反了
             totalLength.addAndGet(lastAppendLocation.get().getOffset() - lastFileLength);
         }
 
@@ -585,6 +586,7 @@ public class Journal {
                         int nextOffset = Math.toIntExact(randomAccessFile.getFilePointer() - bs.remaining());
                         Sequence sequence = new Sequence(location.getOffset(), nextOffset - 1);
                         LOG.warn("Corrupt journal records found in '{}' between offsets: {}", dataFile.getFile(), sequence);
+                        //这个for循环次数不少呀
                         dataFile.corruptedBlocks.add(sequence);
                         location.setOffset(nextOffset);
                     } else {
@@ -615,6 +617,7 @@ public class Journal {
                 //在这里改变了文件大小但是没改变总大小啊
                 //写数据的时候难道不是根据这个判断从哪开始写吗
                 //应该不是从底层文件的偏移量来的吧 之前所有的处理并没有改变文件的偏移量啊
+                //最后一个文件这里的多余量会处理
                 dataFile.setLength((int) dataFile.corruptedBlocks.removeLastSequence().getFirst());
             }
         }

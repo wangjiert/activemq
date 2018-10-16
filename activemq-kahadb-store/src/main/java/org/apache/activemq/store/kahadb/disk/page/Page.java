@@ -40,6 +40,7 @@ public class Page<T> {
     int checksum;
 
     // Points to the next page in the chunk stream
+    //同时也记录了page大小
     long next;
     //page file的pageNo 0存的是Metadata
     T data;

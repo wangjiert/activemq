@@ -46,7 +46,7 @@ public class ProducerBrokerExchange {
     //记录了最后一次发送的消息的序列吧
     //可能会由于缓存过多而被设置为-1
     private AtomicLong lastSendSequenceNumber = new AtomicLong(-1);
-    //应该是表示是都记录生产者id吧
+    //应该是表示是否记录生产者id吧
     private boolean auditProducerSequenceIds;
     //是不是网络生产者
     private boolean isNetworkProducer;

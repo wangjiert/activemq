@@ -225,6 +225,7 @@ public class BrokerService implements Service {
     private boolean useLocalHostBrokerName;
     private final CountDownLatch stoppedLatch = new CountDownLatch(1);
     private final CountDownLatch startedLatch = new CountDownLatch(1);
+    //就是没有被包装过的broker
     private Broker regionBroker;
     //生产者占系统资源的多少
     private int producerSystemUsagePortion = 60;
@@ -2612,6 +2613,7 @@ public class BrokerService implements Service {
      */
     protected void startDestinations() throws Exception {
         if (destinations != null) {
+            //添加地址的时候好像是取连接和回话的id 这个连接上下文有这个东西吗
             ConnectionContext adminConnectionContext = getAdminConnectionContext();
             for (int i = 0; i < destinations.length; i++) {
                 ActiveMQDestination destination = destinations[i];

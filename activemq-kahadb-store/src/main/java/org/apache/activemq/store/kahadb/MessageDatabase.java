@@ -737,6 +737,7 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
             pageFile.tx().execute(new Transaction.Closure<IOException>() {
                 @Override
                 public void execute(Transaction tx) throws IOException {
+                    //就是删除有问题的消息在index文件的相应数据
                     recoverIndex(tx);
                 }
             });
@@ -940,6 +941,7 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
             }
         }
 
+        //移除所有已经找到的的文件
         missingJournalFiles.removeAll(journal.getFileMap().keySet());
 
         if (!missingJournalFiles.isEmpty()) {
@@ -972,6 +974,7 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
         if (!missingPredicates.isEmpty()) {
             for (Entry<String, StoredDestination> sdEntry : storedDestinations.entrySet()) {
                 final StoredDestination sd = sdEntry.getValue();
+                //存放的是找不到的消息
                 final LinkedHashMap<Long, Location> matches = new LinkedHashMap<>();
                 sd.locationIndex.visit(tx, new BTreeVisitor.OrVisitor<Location, Long>(missingPredicates) {
                     @Override
@@ -1895,6 +1898,7 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
 
                                 final KahaSubscriptionCommand kahaSub =
                                     destination.subscriptions.get(tx, subscriptionKey);
+                                //订阅命令换个位置
                                 destination.subLocations.put(
                                     tx, subscriptionKey, checkpointSubscriptionCommand(kahaSub));
 
@@ -1945,6 +1949,7 @@ public abstract class MessageDatabase extends ServiceSupport implements BrokerSe
                 }
             }
 
+            //删掉确认map里面的值的set里面准备删除的文件的id
             if (!gcCandidateSet.isEmpty()) {
                 LOG.debug("Cleanup removing the data files: {}", gcCandidateSet);
                 for (Integer candidate : gcCandidateSet) {

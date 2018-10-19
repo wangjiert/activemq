@@ -859,6 +859,7 @@ public class KahaDBStore extends MessageDatabase implements PersistenceAdapter, 
                         }
                     });
                     //在刚启动的时候应该是0吧
+                    //为什么只减去了数量没有管大小呢
                     recoveredStatistics.getMessageCount().subtract(ackedAndPrepared.size());
                     getMessageStoreStatistics().getMessageCount().setCount(recoveredStatistics.getMessageCount().getCount());
                     getMessageStoreStatistics().getMessageSize().setTotalSize(recoveredStatistics.getMessageSize().getTotalSize());

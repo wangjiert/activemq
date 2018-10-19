@@ -128,11 +128,7 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
     private final PendingList pagedInMessages = new OrderedPendingList();
     // Messages that are paged in but have not yet been targeted at a subscription
     private final ReentrantReadWriteLock pagedInPendingDispatchLock = new ReentrantReadWriteLock();
-    //感觉这个是不是消息的缓存
-    //这个是什么啊 怎么有这么多的消息缓存对象
-    //难道说这个里面存的都是马上就被分发的数据吗
-    //看来逻辑是 消息从messages里面读取出来然后放到里面
-    //如果消息已经发送出去了但是还没有收到回复就放到pagedInMessages里面
+    //启动的时候就会直接放很多消息进去
     protected QueueDispatchPendingList dispatchPendingList = new QueueDispatchPendingList();
     //正在进行发送的消息
     private AtomicInteger pendingSends = new AtomicInteger(0);
@@ -281,6 +277,7 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
     public Queue(BrokerService brokerService, final ActiveMQDestination destination, MessageStore store,
                  DestinationStatistics parentStats, TaskRunnerFactory taskFactory) throws Exception {
         super(brokerService, store, destination, parentStats);
+        //brokerservice创建的一个类似于线程池的东西
         this.taskFactory = taskFactory;
         this.dispatchSelector = new QueueDispatchSelector(destination);
         if (store != null) {
@@ -333,6 +330,7 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
                 toExpire.add(message);
                 return true;
             }
+            //直接返回了true 为什么要判断呢
             if (hasSpace()) {
                 messagesLock.writeLock().lock();
                 try {
@@ -344,6 +342,7 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
                 } finally {
                     messagesLock.writeLock().unlock();
                 }
+                //加了数量没加大小
                 destinationStatistics.getMessages().increment();
                 return true;
             }
@@ -394,6 +393,7 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
     //初始化
     public void initialize() throws Exception {
 
+        //这个东西有可能会被policy配置
         if (this.messages == null) {
             if (destination.isTemporary() || broker == null || store == null) {
                 this.messages = new VMPendingMessageCursor(isPrioritizedMessages());
@@ -412,6 +412,7 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
         //这个以后好好看看 会由于网络堵塞造成死锁
         if (messages instanceof VMPendingMessageCursor) {
             this.systemUsage = brokerService.getSystemUsage();
+            //memoryUsage是每个地址自己创建的
             memoryUsage.setParent(systemUsage.getMemoryUsage());
         }
 
@@ -858,6 +859,7 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
         sendLock.lockInterruptibly();
         try {
             synchronized (indexOrderedCursorUpdates) {
+                //添加消息的时候会加到这个里面
                 MessageContext candidate = indexOrderedCursorUpdates.peek();
                 while (candidate != null && candidate.message.getMessageId().getFutureOrSequenceLong() != null) {
                     candidate = indexOrderedCursorUpdates.removeFirst();
@@ -930,7 +932,6 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
         }
     }
 
-    //处理消息发送的核心代码
     void doMessageSend(final ProducerBrokerExchange producerExchange, final Message message) throws IOException,
             Exception {
         final ConnectionContext context = producerExchange.getConnectionContext();

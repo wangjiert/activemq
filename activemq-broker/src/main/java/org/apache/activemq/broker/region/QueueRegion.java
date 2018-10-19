@@ -63,7 +63,7 @@ public class QueueRegion extends AbstractRegion {
             }
             return sub;
         } else {
-            QueueSubscription sub =   new QueueSubscription(broker, usageManager,context, info);
+            QueueSubscription sub = new QueueSubscription(broker, usageManager,context, info);
             if (entry != null) {
                 entry.configure(broker, usageManager, sub);
             }

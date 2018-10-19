@@ -136,10 +136,12 @@ public abstract class BaseDestination implements Destination {
         //这个父类统计是brokerservice创建的 所有创建的地址的parent都是同一个
         this.destinationStatistics.setEnabled(parentStats.isEnabled());
         this.destinationStatistics.setParent(parentStats);
+        //有创建了一个
         this.systemUsage = new SystemUsage(brokerService.getProducerSystemUsage(), destination.toString());
         this.memoryUsage = this.systemUsage.getMemoryUsage();
         this.memoryUsage.setUsagePortion(1.0f);
         this.regionBroker = brokerService.getRegionBroker();
+        //就是brokerservice创建的一个定时任务Timer
         this.scheduler = brokerService.getBroker().getScheduler();
     }
 

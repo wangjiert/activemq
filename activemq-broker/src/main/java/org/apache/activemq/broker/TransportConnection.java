@@ -117,6 +117,7 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
     // Keeps track of the state of the connections.
     // protected final ConcurrentHashMap localConnectionStates=new
     // ConcurrentHashMap();
+    //这个集合是region broker里面的集合的引用  所以缓存了一个虚拟机的全部的连接状态
     protected final Map<ConnectionId, ConnectionState> brokerConnectionStates;
     // The broker and wireformat info that was exchanged.
     protected BrokerInfo brokerInfo;
@@ -843,7 +844,7 @@ public class TransportConnection implements Connection, Task, CommandVisitor {
                 state = new TransportConnectionState(info, this);
                 brokerConnectionStates.put(info.getConnectionId(), state);
             }
-            //感觉好多地方都有这种引用技术的类似代码 难道是有个线程在不停的根据引用计数删除集合元素吗
+            //难道还会一个连接id会被多次创建吗
             state.incrementReference();
         }
         // If there are 2 concurrent connections for the same connection id,

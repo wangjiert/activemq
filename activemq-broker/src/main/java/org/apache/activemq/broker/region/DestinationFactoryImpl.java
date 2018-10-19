@@ -127,6 +127,7 @@ public class DestinationFactoryImpl extends DestinationFactory {
         if (broker.getDestinationPolicy() != null) {
             PolicyEntry entry = broker.getDestinationPolicy().getEntryFor(destination);
             if (entry != null) {
+                //brokerserive创建region broker时候设置的
                 entry.configure(broker,queue);
             }
         }

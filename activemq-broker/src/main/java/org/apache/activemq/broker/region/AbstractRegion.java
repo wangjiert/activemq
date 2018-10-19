@@ -71,6 +71,7 @@ public abstract class AbstractRegion implements Region {
     protected final DestinationFactory destinationFactory;
     //会统计所有的创建的地址
     protected final DestinationStatistics destinationStatistics;
+    //创建的时候是否有改过呢
     protected final RegionStatistics regionStatistics = new RegionStatistics();
     protected final RegionBroker broker;
     protected boolean autoCreateDestinations = true;

@@ -727,6 +727,7 @@ public class KahaDBStore extends MessageDatabase implements PersistenceAdapter, 
                     //这个消息已经被读出来过
                     //如果一个消息都还没有被读出来 怎么还能够roll back的
                     if (sd.orderIndex.alreadyDispatched(sequence)) {
+                        //超时消息也会包含在counter里面，所以这个个数可能没有counter这么多
                         listener.recoverMessage(loadMessage(sd.orderIndex.get(tx, sequence).location));
                         counter++;
                         if (counter >= maxReturned) {

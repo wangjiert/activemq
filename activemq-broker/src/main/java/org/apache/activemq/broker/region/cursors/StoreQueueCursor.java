@@ -32,9 +32,8 @@ public class StoreQueueCursor extends AbstractPendingMessageCursor {
 
     private static final Logger LOG = LoggerFactory.getLogger(StoreQueueCursor.class);
     private final Broker broker;
-    //明明取的是两个cursor的和
-    //说明两个消息获取对象中的消息不是重叠的
-    //直接访问这个变量就可以知道还有多少条消息可以读
+    //说明这个地址里面总共有多少条消息
+    //但是当地址没有启动时，消息也进去了，这个变量的值却没变
     private int pendingCount;
     private final Queue queue;
     //感觉这个是放在内存中的消息缓冲
@@ -113,6 +112,7 @@ public class StoreQueueCursor extends AbstractPendingMessageCursor {
         boolean result = true;
         if (node != null) {
             Message msg = node.getMessage();
+            //地址没有启动的时候只有非持久消息会丢弃
             if (started) {
                 pendingCount++;
                 if (!msg.isPersistent()) {

@@ -230,6 +230,7 @@ public class FilePendingMessageCursor extends AbstractPendingMessageCursor imple
                     //这样就可以保持数据的顺序了
                     if (hasSpace() || this.store == null) {
                         memoryList.addMessageLast(node);
+                        //在这里增加了内存使用量
                         node.incrementReferenceCount();
                         setCacheEnabled(true);
                         return true;
@@ -453,6 +454,7 @@ public class FilePendingMessageCursor extends AbstractPendingMessageCursor imple
             for (Iterator<MessageReference> iterator = memoryList.iterator(); iterator.hasNext();) {
                 MessageReference node = iterator.next();
                 if (node.isExpired()) {
+                    //减少内存使用量
                     node.decrementReferenceCount();
                     expired.add(node);
                     iterator.remove();

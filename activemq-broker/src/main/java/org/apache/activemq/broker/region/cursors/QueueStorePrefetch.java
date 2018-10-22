@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
  *
  *
  */
+//持久化消息的缓存就是在内存中放一定的消息
 class QueueStorePrefetch extends AbstractStoreCursor {
     private static final Logger LOG = LoggerFactory.getLogger(QueueStorePrefetch.class);
     //kahadb的代理store

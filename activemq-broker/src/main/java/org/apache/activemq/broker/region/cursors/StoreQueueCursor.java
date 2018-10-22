@@ -58,6 +58,7 @@ public class StoreQueueCursor extends AbstractPendingMessageCursor {
     public StoreQueueCursor(Broker broker,Queue queue) {
         super((queue != null ? queue.isPrioritizedMessages():false));
         this.broker=broker;
+        //这个缓存属于的地址
         this.queue = queue;
         this.persistent = new QueueStorePrefetch(queue, broker);
         currentCursor = persistent;

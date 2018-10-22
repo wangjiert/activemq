@@ -281,6 +281,9 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
         this.taskFactory = taskFactory;
         this.dispatchSelector = new QueueDispatchSelector(destination);
         if (store != null) {
+            //监听器实现的功能就是把消息加到queue对象的indexOrderedCursorUpdates属性里面（onAdd方法）
+            //在store添加消息的时候会回调这个方法
+            //这个集合里面的值在消息添加完成之后就会被用
             store.registerIndexListener(this);
         }
     }
@@ -309,7 +312,9 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
     class BatchMessageRecoveryListener implements MessageRecoveryListener {
         final LinkedList<Message> toExpire = new LinkedList<Message>();
         final double totalMessageCount;
+        //累积的恢复量
         int recoveredAccumulator = 0;
+        //当前的恢复量
         int currentBatchCount;
 
         BatchMessageRecoveryListener(int totalMessageCount) {
@@ -394,10 +399,12 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
     public void initialize() throws Exception {
 
         //这个东西有可能会被policy配置
+        //每一个内部地址对象都有一个消息缓存对象，缓存对象如果不是内存的缓存的话 又可以分为持久化消息的缓存对象和非持久化消息的缓存对象
         if (this.messages == null) {
             if (destination.isTemporary() || broker == null || store == null) {
                 this.messages = new VMPendingMessageCursor(isPrioritizedMessages());
             } else {
+                //有两个缓存机制，一个用于持久化消息的缓存，一个用于非持久化消息的缓存
                 this.messages = new StoreQueueCursor(broker, this);
             }
         }
@@ -421,9 +428,11 @@ public class Queue extends BaseDestination implements Task, UsageListener, Index
         this.taskRunner = taskFactory.createTaskRunner(this, "Queue:" + destination.getPhysicalName());
 
         //就设置了内存管理对象
+        //一个内部地址对象对应一个store对象，这两个对象共享同一个内存限制对象
         super.initialize();
         if (store != null) {
             // Restore the persistent messages.
+            //消息缓存对象也和内部地址共用系统使用对象
             messages.setSystemUsage(systemUsage);
             messages.setEnableAudit(isEnableAudit());
             messages.setMaxAuditDepth(getMaxAuditDepth());

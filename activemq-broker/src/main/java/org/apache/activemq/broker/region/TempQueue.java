@@ -58,7 +58,9 @@ public class TempQueue extends Queue{
     public void initialize() throws Exception {
         this.messages=new VMPendingMessageCursor(false);
         this.messages.setMemoryUsageHighWaterMark(getCursorMemoryHighWaterMark());
+        //初始化的时候明明新建了一个的 怎么要用broker service的覆盖掉呢
         this.systemUsage = brokerService.getSystemUsage();
+        //systemUsage都被覆盖了，为什么memoryUsage还在继续沿用呢
         memoryUsage.setParent(systemUsage.getMemoryUsage());           
         this.taskRunner = taskFactory.createTaskRunner(this, "TempQueue:  " + destination.getPhysicalName());
     }

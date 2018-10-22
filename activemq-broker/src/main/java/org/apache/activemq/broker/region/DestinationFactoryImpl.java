@@ -41,7 +41,9 @@ import org.apache.activemq.thread.TaskRunnerFactory;
  */
 public class DestinationFactoryImpl extends DestinationFactory {
 
+    //broker service传进来的
     protected final TaskRunnerFactory taskRunnerFactory;
+    //也来源于region broker
     protected final PersistenceAdapter persistenceAdapter;
     protected RegionBroker broker;
     private final BrokerService brokerService;
@@ -71,12 +73,14 @@ public class DestinationFactoryImpl extends DestinationFactory {
     /**
      * @return instance of {@link Queue} or {@link Topic}
      */
+    //地址对象的任务感觉就是把磁盘的消息放到缓存里面
     @Override
     public Destination createDestination(ConnectionContext context, ActiveMQDestination destination, DestinationStatistics destinationStatistics) throws Exception {
         if (destination.isQueue()) {
             if (destination.isTemporary()) {
                 final ActiveMQTempDestination tempDest = (ActiveMQTempDestination)destination;
                 Queue queue = new TempQueue(brokerService, destination, null, destinationStatistics, taskRunnerFactory);
+                //所有的类型的地址对象这个逻辑应该一样，通过具体的地址找到配置项，配置项自己回去配置内部地址对象
                 configureQueue(queue, destination);
                 queue.initialize();
                 return queue;

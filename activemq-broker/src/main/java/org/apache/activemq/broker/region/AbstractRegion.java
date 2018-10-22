@@ -62,14 +62,14 @@ public abstract class AbstractRegion implements Region {
     private static final Logger LOG = LoggerFactory.getLogger(AbstractRegion.class);
 
     protected final Map<ActiveMQDestination, Destination> destinations = new ConcurrentHashMap<ActiveMQDestination, Destination>();
-    //都在里面取数据没看到什么时候放进去的
-    //key应该是jms的地址 value应该是broker内部的地址
+    //key是ActiveMQDestination value是内部的地址例如queue topic
     protected final DestinationMap destinationMap = new DestinationMap();
     //拉消息的时候是直接在map里面拿,什么时候放进去的呢
     protected final Map<ConsumerId, Subscription> subscriptions = new ConcurrentHashMap<ConsumerId, Subscription>();
     protected final SystemUsage usageManager;
     protected final DestinationFactory destinationFactory;
     //会统计所有的创建的地址
+    //这个统计对象来源于region broker
     protected final DestinationStatistics destinationStatistics;
     //创建的时候是否有改过呢
     protected final RegionStatistics regionStatistics = new RegionStatistics();
@@ -236,6 +236,7 @@ public abstract class AbstractRegion implements Region {
                 // destinations associated with this policy
                 // If a destination isn't specified, then just count up
                 // non-advisory destinations (ie count all destinations)
+                //从这里看的话，entry里面的地址应该是一个可以匹配多个地址的模糊地址
                 int destinationSize = (int) (entry.getDestination() != null ?
                         destinationMap.unsynchronizedGet(entry.getDestination()).size() : regionStatistics.getDestinations().getCount());
                 if (destinationSize >= entry.getMaxDestinations()) {
